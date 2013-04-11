@@ -34,8 +34,8 @@ trait LibGenOps extends BaseGenOps with BaseGenDataStructures {
       
     // case Def(QuoteSeq(i)) => "("+i+": _*)"  // not exactly a quoted sequence..
     case Def(QuoteSeq(argName)) => argName
-      
-    case Const(s: String) => replaceWildcards(s) // don't add quotes 
+    case Def(QuoteLiteral(s)) => replaceWildcards(qu+s+qu)
+    case Const(s: String) => replaceWildcards(s) // don't add quotes // DO ADD QUOTES
     
     case _ => super.quote(x)
   }  

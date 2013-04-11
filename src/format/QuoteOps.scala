@@ -48,6 +48,8 @@ trait QuoteOps extends Base {
   //  quote(anew.args(0)) // type is VarArgs
   def quotedSeq(i: Int): Rep[String]
   
+  def stringLiteral(s: String): Rep[String]
+
   /**
    * Function tpes
    */
@@ -67,6 +69,7 @@ trait QuoteOps extends Base {
   // the reason we don't is that it's harder to process these symbols outside-in, i.e. what we want to do is run quote on the entire string and then replace the wildcards
   def quotes(s: String) = qu+s+qu
   def unquotes(s: String) = qu+"+"+s+"+"+qu  
+
 }
 
 trait QuoteOpsExp extends QuoteOps {
@@ -79,13 +82,23 @@ trait QuoteOpsExp extends QuoteOps {
   def quote_tpename(x: Rep[DSLOp]) = x.grp.name
   def quote_quotedarginstance(i: Int) = unquotes("quote(" + opArgPrefix + i + ")")
   def quote_quotedarginstance(name: String) = unquotes("quote(" + name + ")")
-  
+
+  /**
+  * Strings
+  */  
+  case class QuoteLiteral(s: String) extends Def[String]
+  def stringLiteral(s: String) = {
+    QuoteLiteral(/*qu+*/"\\"+qu+s.replaceAll("\"", "\\\\"+qu).replaceAll("\\\\", "\\\\\\\\\\\\")+"\\"+qu/*+qu*/)
+  }
+
   /**
    * Sequences
    */  
   case class QuoteSeq(arg: String) extends Def[String]
   def quotedSeq(arg: Int) = QuoteSeq(opArgPrefix + arg)
   def quotedSeq(arg: String) = QuoteSeq(arg)
+  //def quotedSeq(arg: Int) = quotedArg(arg)
+  //def quotedSeq(arg: String) = quotedArg(arg)
   
   /**
    * Function types

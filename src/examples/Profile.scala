@@ -5,21 +5,22 @@ import core.{ForgeApplication,ForgeApplicationRunner}
 
 object ProfileDSLRunner extends ForgeApplicationRunner with ProfileDSL
 
-trait ProfileDSL extends ForgeApplication with ScalaOps {
+trait ProfileDSL extends ForgeApplication with ScalaOps with OptiVega {
   /**
    * The name of your DSL. This is the name that will be used in generated files,
    * package declarations, etc.
    */
-  def dslName = "Profile"
+  override def dslName = "Profile"
     
   /**
    * The specification is the DSL definition (types, data structures, ops, code generators)
    */
-  def specification() = {
+  override def specification() = {
     /**
      * Include Scala ops
      */
-     addScalaOps()
+    //addScalaOps()  
+    addOptiVega()
         
     /**
      * Types
@@ -83,11 +84,8 @@ trait ProfileDSL extends ForgeApplication with ScalaOps {
     codegen (pplot) ($cala, stream.printLines(
     "val mean = "+quotedArg(0)+"._data.reduce(_+_) / "+quotedArg(0) + ".length",
     "val hi = "+quotedArg(0)+"._data.sortWith(_ > _).head",
-    "val lo = "+quotedArg(0)+"._data.sortWith(_ < _).head", // who cares
-    "scala.io.Source.fromFile(\"/afs/cs.stanford.edu/u/gibbons4/data/VegaBoxPlot.json\").mkString",
-    ".replaceAll(\"R_MEAN\", mean.toString)",
-    ".replaceAll(\"R_LO\", lo.toString)",
-    ".replaceAll(\"R_HI\", hi.toString)"
+    "val lo = "+quotedArg(0)+"._data.sortWith(_ < _).head",
+    "Vega().plot()"
     ))
 
     /**

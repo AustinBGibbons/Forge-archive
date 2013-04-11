@@ -3,19 +3,27 @@ package examples
 
 import core.{ForgeApplication,ForgeApplicationRunner}
 
-object OptiVegaDSLRunner extends ForgeApplicationRunner with OptiVegaDSL
+object OptiVegaRunner extends ForgeApplicationRunner with OptiVega
 
-trait OptiVegaDSL extends ForgeApplication with ScalaOps {
+trait OptiVega extends ForgeApplication with ScalaOps {
   /**
    * The name of your DSL. This is the name that will be used in generated files,
    * package declarations, etc.
    */
   def dslName = "OptiVega"
     
+  def addOptiVega() {
+    ov_specification()
+  }
+
+  def specification() = {
+    ov_specification()
+  }
+
   /**
    * The specification is the DSL definition (types, data structures, ops, code generators)
    */
-  def specification() = {
+  def ov_specification() = {
     /**
      * Include Scala ops
      */
@@ -24,107 +32,33 @@ trait OptiVegaDSL extends ForgeApplication with ScalaOps {
     /**
      * Types
      */
-    val AD = tpeInst(GArray(tpePar("T")), List(MDouble))
-    val OptiVega = tpe("OptiVega") 
-    val Padding = tpe("Padding")
-    val Data = tpe("Data")    
-    val Range = tpe("Range")    
-    val Domain = tpe("Domain")    
-    val Transform = tpe("Transform")
-    val Scales = tpe("Scales")    
-    val Axes = tpe("Axes")    
-    val Marks = tpe("Marks")    
-    val MarkProperties = tpe("MarkProperties")
-    val MarkProperty = tpe("MarkProperty")
-    val MarkData = tpe("MarkData")
+    val Vega = tpe("Vega")
 
     /**
      * Data structures
      */
-    data(OptiVega, List(), ("name", MString),
-      ("width", MInt),
-      ("height", MInt),
-      ("padding", Padding), // bottom top left right
-      ("data", Data),
-      ("scales", Scales),
-      ("axes", Axes),
-      ("marks", Marks)
-    )
-    data(Padding, List(), ("bottom", MInt),
-      ("top", MInt),
-      ("left", MInt),
-      ("right", MInt)
-    )
-    data(Data, List(), ("name", MString),
-      ("values", AD),
-      ("url", MString),
-      ("transform", Transform) // not completely sure what Transform encompasses
-    )
-    data(Transform, List(), ("type", MString),
-      ("value", MString),
-      ("by", MString)
-    )
-    data(Scales, List(), ("name", MString),
-      ("type", MString),
-      ("nice", MBoolean),
-      ("range", Range),
-      ("domain", Domain) 
-    )
-    data(Range, List(), ("low", MInt), ("high", MInt))
-    data(Domain, List(), ("data", MString), ("field", MString))
-    data(Axes, List(), ("type", MString),
-      ("scale", MString),
-      ("ticks", MInt)
-    )
-    data(Marks, List(), ("type", MString),
-      ("from", MString), // data -> table?
-      ("properties", MarkProperties)
-    )
-    data(MarkProperties, List(), ("enter", MarkProperty),
-      ("update", MarkProperty),
-      ("hover", MarkProperty)
-    )
-    data(MarkProperty, List(), ("x", MarkData),
-      ("y", MarkData),
-      ("width", MarkData),
-      ("height", MarkData),
-      ("x2", MarkData),
-      ("y2", MarkData),
-      ("fill", MarkData),
-      ("stroke", MarkData),
-      ("startAngle", MarkData),
-      ("endAngle", MarkData),
-      ("innerRadius", MarkData),
-      ("outerRadius", MarkData)
-    )
-    data(MarkData, List(), ("scale", MString),
-      ("scale", MString),
-      ("field", MString),
-      ("band", MBoolean),
-      ("offset", MInt),
-      ("value", MInt)
-    )
+    data(Vega, List())
     
     /* Generic formatting instance */
     val stream = ForgePrinter()
         
     /**
      * Ops
-     * 
-     * We could simplify this by reusing templates even more, i.e. specializing for different types
-     * (e.g. accept a list of binary zip ops that only differentiate in function applied)
      */           
-    val ov_new = op (OptiVega) ("apply", static, List(), List(MInt), OptiVega, codegenerated, effect = mutable)
-    val ov_plot = op (OptiVega) ("vegaPlot", infix, List(), List(OptiVega), MString, codegenerated)
-    codegen (pplot) ($cala, stream.printLines(
-    ""
+        
+    val vega_new = op (Vega) ("apply", static, List(), List(), Vega, codegenerated)
+    codegen (vega_new) ($cala, "new "+vega_new.tpeName+"()")
+    
+    val boxString = stringLiteral("{\"label\": \"R_LABEL\", \"mean\": 1, \"lo\" : 0, \"hi\": 2}")
+    //val boxString = "\"{\\\"label\\\": \\\"R_LABEL\\\", \\\"mean\\\": 1, \\\"lo\\\": 0, \\\"hi\\\": 2},\""
+    val vega_plot = op (Vega) ("plot", infix, List(), List(Vega), MString, codegenerated)
+    codegen (vega_plot) ($cala, stream.printLines(
+    "val baseString = "+boxString,
+    "val dataString = baseString.replaceAll(\"R_LABEL\", \"HelloWorld\")",
+    "scala.io.Source.fromFile(\"/afs/cs.stanford.edu/u/gibbons4/data/VegaBoxPlot.json\").mkString",
+    ".replaceAll(\"REPLACE_ME\", dataString)"
     ))
-
-    /**
-     * Code generators
-     */
-      
-    codegen (ov_new) ($cala, "new "+ov_new.tpeName+"("+quotedArg(0)+", new Array[Double]("+quotedArg(0)+"))")
+    
     ()
   }
 }
