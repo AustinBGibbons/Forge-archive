@@ -10,6 +10,6 @@ trait HelloWorld extends OptiVegaApplication {
     println("hello world")
 
     val vega = Vega()
-    println(vega.plot())
+    println(vega.plot(plot="box", data=Array(BoxPlot("Profile", 2, 1, 4))))
   }
 }

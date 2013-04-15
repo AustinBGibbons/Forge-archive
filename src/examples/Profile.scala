@@ -80,13 +80,21 @@ trait ProfileDSL extends ForgeApplication with ScalaOps with OptiVega {
         "  (end - start)/1000d }"
     )))
        
-    val pplot = op (Profile) ("plot", infix, List(), List(Profile), MString, codegenerated)
-    codegen (pplot) ($cala, stream.printLines(
+/*
+    val pvegaData = op (Profile) ("vegaData", infix, List(), List(Profile), (MString, MDouble, MDouble, MDouble), codegenerated)
+    codegen (pvegaData) ($cala, stream.printLines(
     "val mean = "+quotedArg(0)+"._data.reduce(_+_) / "+quotedArg(0) + ".length",
-    "val hi = "+quotedArg(0)+"._data.sortWith(_ > _).head",
     "val lo = "+quotedArg(0)+"._data.sortWith(_ < _).head",
-    "Vega().plot()"
+    "val hi = "+quotedArg(0)+"._data.sortWith(_ > _).head",
+    "(\"Profile\", mean, lo, hi)"
     ))
+*/
+    val pplot = op (Profile) ("plot", infix, List(), List(Profile), MString, single(MString, {
+      stream.printLines(
+        "val vega = Vega()",
+        "vega.plot(graph=\"box\", data=Array(BoxPlot(\"Profile\", 2, 1, 4)))"
+        //"Vega().plot(\"box\", data=Array((\"Profile\", mean, lo, hi)))"
+    )}))
 
     /**
      * DeliteCollectionification
