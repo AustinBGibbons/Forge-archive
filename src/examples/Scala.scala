@@ -27,7 +27,7 @@ trait ScalaOps extends ForgeApplication {
 
   def arrays() = {
     val T = tpePar("T")
-    // val R = tpePar("R")
+    val R = tpePar("R")
     val Arr = GArray(T)
     
     // can't overload 'apply', because varArgs(T) is ambiguous with MInt
@@ -37,8 +37,10 @@ trait ScalaOps extends ForgeApplication {
     val alength = op (Arr) ("length", infix, List(T), List(Arr), MInt, codegenerated)    
     val aapply = op (Arr) ("apply", infix, List(T), List(Arr,MInt), T, codegenerated)
     val aupdate = op (Arr) ("update", infix, List(T), List(Arr,MInt,T), MUnit, codegenerated, effect = write(0))    
-    // val amap = op (Arr) ("map", infix, List(T,R), List(Arr,MFunction(List(T),R)), GArray(R), map((T,R,Arr), 0, "e => "+quotedArg(1)+"(e)"))
-    
+    //val amap = op (Arr) ("map", infix, List(T,R), List(Arr,MFunction(List(T),R)), GArray(R), map((T,R,Arr), 0, "e => "+quotedArg(1)+"(e)"))
+    val amap = op (Arr) ("map", infix, List(T,R), List(Arr,MFunction(List(T),R)), GArray(R), codegenerated)
+    codegen (amap) ($cala, quotedArg(0) + ".map("+quotedArg(1)+")")    
+
     // the alias hint tells Delite that this operation copies its inputs, avoiding conservative mutable sharing errors     
     val aclone = op (Arr) ("Clone", infix, List(T), List(Arr), Arr, codegenerated, aliasHint = copies(0))            
 

@@ -14,7 +14,7 @@ trait ForgeOps extends Base {
   def tpePar(name: String, ctxBounds: List[TypeClass] = List()) = forge_tpepar(name, ctxBounds) // TODO: type bounds
   def tpe(name: String, tpePars: List[Rep[TypePar]] = List(), stage: StageTag = future) = forge_tpe(name, tpePars, stage)
   def tpeInst(hkTpe: Rep[DSLType], tpeArgs: List[Rep[DSLType]] = List(), stage: StageTag = future) = forge_tpeinst(hkTpe, tpeArgs, stage)
-  def ftpe(args: List[Rep[DSLArg]], ret: Rep[DSLType], freq: Frequency) = forge_ftpe(args, ret, freq)
+  def ftpe(args: List[Rep[DSLType]], ret: Rep[DSLType], freq: Frequency) = forge_ftpe(args, ret, freq)
   def arg(name: String, tpe: Rep[DSLType], default: Option[String]= None) = forge_arg(name, tpe, default)
   def lift(grp: Rep[DSLGroup])(tpe: Rep[DSLType]) = forge_lift(grp, tpe)
   def data(tpe: Rep[DSLType], tpePars: List[Rep[TypePar]], fields: (String, Rep[DSLType])*) = forge_data(tpe, tpePars, fields)
@@ -40,7 +40,7 @@ trait ForgeOps extends Base {
   def forge_tpeinst(hkTpe: Rep[DSLType], tpeArgs: List[Rep[DSLType]], stage: StageTag): Rep[DSLType]    
   def forge_arg(name: String, tpe: Rep[DSLType], default: Option[String]): Rep[DSLArg]
   def forge_anyToArg(a: (Any, Int)): Rep[DSLArg]
-  def forge_ftpe(args: List[Rep[DSLArg]], ret: Rep[DSLType], freq: Frequency): Rep[DSLType]
+  def forge_ftpe(args: List[Rep[DSLType]], ret: Rep[DSLType], freq: Frequency): Rep[DSLType]
   def forge_lift(grp: Rep[DSLGroup], tpe: Rep[DSLType]): Rep[Unit]
   def forge_data(tpe: Rep[DSLType], tpePars: List[Rep[TypePar]], fields: Seq[(String, Rep[DSLType])]): Rep[DSLData]  
   def forge_op(tpe: Rep[DSLGroup], name: String, style: MethodType, tpePars: List[Rep[TypePar]], args: List[Rep[DSLArg]], implicitArgs: List[Rep[DSLType]], retTpe: Rep[DSLType], opTpe: OpType, effect: EffectType, aliasHint: AliasHint): Rep[DSLOp]
@@ -109,9 +109,9 @@ trait ForgeOpsExp extends ForgeOps with BaseExp {
   }
     
   /* A function of Rep arguments */
-  case class FTpe(args: List[Rep[DSLArg]], ret: Rep[DSLType], freq: Frequency) extends Def[DSLType]
+  case class FTpe(args: List[Rep[DSLType]], ret: Rep[DSLType], freq: Frequency) extends Def[DSLType]
   
-  def forge_ftpe(args: List[Rep[DSLArg]], ret: Rep[DSLType], freq: Frequency) = FTpe(args,ret,freq)
+  def forge_ftpe(args: List[Rep[DSLType]], ret: Rep[DSLType], freq: Frequency) = FTpe(args,ret,freq)
   
   /* A statement declaring a type to lift in a particular scope (group) */
   def forge_lift(grp: Rep[DSLGroup], tpe: Rep[DSLType]) = {

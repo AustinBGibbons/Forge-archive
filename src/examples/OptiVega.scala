@@ -53,9 +53,10 @@ trait OptiVega extends ForgeApplication with ScalaOps {
     val bp_new = op (BoxPlot) ("apply", static, List(), List(MString, MAny, MAny, MAny), BoxPlot, codegenerated)
     codegen (bp_new) ($cala, "new "+bp_new.tpeName+"("+(0 to 3).map(quotedArg).mkString(",")+")")
 
-    val boxString = stringLiteral("{\"label\": \"R_LABEL\", \"mean\": R_MEAN, \"lo\" : R_LO, \"hi\": R_HI}")
-    val vega_plot = op (Vega) ("plot", infix, List(), List(Vega, ("plot", MString), ("data", tpeInst(GArray(tpePar("T")), List(BoxPlot)))), MString, codegenerated)
-    codegen (vega_plot) ($cala, stream.printLines(
+    //val boxString = stringLiteral("{\"label\": \"R_LABEL\", \"mean\": R_MEAN, \"lo\" : R_LO, \"hi\": R_HI}")
+    val boxString = "\"{\\\"label\\\": \\\"R_LABEL\\\", \\\"mean\\\": R_MEAN, \\\"lo\\\" : R_LO, \\\"hi\\\": R_HI}\""
+    val vega_plot = op (Vega) ("plot", infix, List(), List(Vega, ("plot", MString), ("data", tpeInst(GArray(tpePar("T")), List(BoxPlot)))), MString, single(MString, {
+    stream.printLines(
       //"val baseString = plotStrings.getOrElse("+quotedArg("plot")+"), \"BAD_PLOT_TYPE\")", // TODO BAD_PLOT_TYPE
       "val baseString = " + boxString, // TODO BAD_PLOT_TYPE
       //"val dataString = "+quotedArg("data")+".map{p => replaceFunctions.get("+quotedArg("plot")+").get.apply(baseString, p)}",
@@ -63,7 +64,7 @@ trait OptiVega extends ForgeApplication with ScalaOps {
       "val template = \"Box.json\"",
       "scala.io.Source.fromFile(\"/afs/cs.stanford.edu/u/gibbons4/data/VegaTemplates/\" + template).mkString",
       ".replaceAll(\"REPLACE_ME\", dataString.mkString(\"\\n\"))"
-    ))
+    )}))
 
       //"val dataString = "+quotedArg("data")+".map{p => baseString.replaceAll(\"R_LABEL\", p.label.toString).replaceAll(\"R_MEAN\", p.mean.toString).replaceAll(\"R_LO\", p.lo.toString).replaceAll(\"R_HI\", p.hi.toString)}",
     /*

@@ -45,7 +45,7 @@ trait BaseGenOps extends ForgeCodeGenBase {
    
    override def quote(x: Exp[Any]) : String = x match {
      case Def(QuoteBlockResult(name,List(byName),ret)) => name
-     case Def(QuoteBlockResult(name,args,ret)) => name + makeArgs(args)
+     case Def(QuoteBlockResult(name,args,ret)) => name //+ 
      case _ => super.quote(x)
    }  
   
