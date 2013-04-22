@@ -38,8 +38,8 @@ trait ScalaOps extends ForgeApplication {
     val aapply = op (Arr) ("apply", infix, List(T), List(Arr,MInt), T, codegenerated)
     val aupdate = op (Arr) ("update", infix, List(T), List(Arr,MInt,T), MUnit, codegenerated, effect = write(0))    
     //val amap = op (Arr) ("map", infix, List(T,R), List(Arr,MFunction(List(T),R)), GArray(R), map((T,R,Arr), 0, "e => "+quotedArg(1)+"(e)"))
-    val amap = op (Arr) ("map", infix, List(T,R), List(Arr,MFunction(List(T),R)), GArray(R), codegenerated)
-    codegen (amap) ($cala, quotedArg(0) + ".map("+quotedArg(1)+")")    
+    //val amap = op (Arr) ("map", infix, List(T,R), List(Arr,MFunction(List(T),R)), GArray(R), codegenerated)
+    //codegen (amap) ($cala, quotedArg(0) + ".map("+quotedArg(1)+")")    
 
     // the alias hint tells Delite that this operation copies its inputs, avoiding conservative mutable sharing errors     
     val aclone = op (Arr) ("Clone", infix, List(T), List(Arr), Arr, codegenerated, aliasHint = copies(0))            
@@ -105,10 +105,12 @@ trait ScalaOps extends ForgeApplication {
     val plus = op (Num) ("+", infix, List(T withBound TNumeric), List(T,T), T, codegenerated)    
     val minus = op (Num) ("-", infix, List(T withBound TNumeric), List(T,T), T, codegenerated)     
     val times = op (Num) ("*", infix, List(T withBound TNumeric), List(T,T), T, codegenerated)    
+    val divide = op (Num) ("/", infix, List(T withBound TNumeric), List(T,T), MDouble, codegenerated) // Numeric doesn't support division
     codegen (zero) ($cala, "implicitly[Numeric["+zero.tpeInstance(0)+"]].zero")
     codegen (plus) ($cala, plus.quotedArg(0) + " + " + plus.quotedArg(1))
     codegen (minus) ($cala, minus.quotedArg(0) + " - " + minus.quotedArg(1))
     codegen (times) ($cala, times.quotedArg(0) + " * " + times.quotedArg(1))
+    codegen (divide) ($cala, divide.quotedArg(0) + ".toDouble / " + divide.quotedArg(1)+".toDouble")
   }
   
   def ordering() = {
