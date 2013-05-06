@@ -9,12 +9,15 @@ trait HelloWrangler extends StringWranglerApplication {
   def main() = {
     println("hello world")    
     
-    val col = Column(3)
+    //val col = Column("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
+    val col = Column(0).columnFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
 
-    col(0) = "0"
-    col(2) = "2"
+    col(0) = "1"
+    col(2) = "3"
 
-    println(col(0))
-    println(col(1))
+    val cutcol = col.cut(1)
+
+    println(cutcol(0))
+    println(cutcol(1))
   }
 }

@@ -83,6 +83,14 @@ trait ScalaOps extends ForgeApplication {
     
     impl (lt) (codegen($cala, lt.quotedArg(0) + " < " + lt.quotedArg(1)))    
     impl (gt) (codegen($cala, gt.quotedArg(0) + " > " + gt.quotedArg(1)))
+
+    val le = op (Ord) ("<=", infix, List(T withBound TOrdering), List(T,T), MBoolean)    
+    val ge = op (Ord) (">=", infix, List(T withBound TOrdering), List(T,T), MBoolean)    
+    
+    impl (le) (codegen($cala, lt.quotedArg(0) + " <= " + lt.quotedArg(1)))    
+    impl (ge) (codegen($cala, gt.quotedArg(0) + " >= " + gt.quotedArg(1)))
+
+    //val ne = op (Ord) ("==", infix, List(T withBound TOrdering))
   }
   
   def strings() = {
@@ -91,6 +99,26 @@ trait ScalaOps extends ForgeApplication {
     
     // overloaded variants of string concat
     val T = tpePar("T") 
+
+    val replaceFirst = op (Str) ("replaceFirst", infix, List(), List(MString, MString, MString), MString)
+    impl (replaceFirst) (codegen($cala, quotedArg(0)+".replaceFirst("+quotedArg(1)+", "+quotedArg(2)+")"))
+
+    val replaceAllLiterally = op (Str) ("replaceAllLiterally", infix, List(), List(MString, MString, MString), MString)
+    impl (replaceAllLiterally) (codegen($cala, quotedArg(0)+".replaceAllLiterally("+quotedArg(1)+", "+quotedArg(2)+")"))
+
+    val indexOf = op (Str) ("indexOf", infix, List(), List(MString, MString), MInt)
+    impl (indexOf) (codegen($cala, quotedArg(0)+".indexOf("+quotedArg(1)+")"))
+
+    val lastIndexOf = op (Str) ("lastIndexOf", infix, List(), List(MString, MString), MInt)
+    impl (lastIndexOf) (codegen($cala, quotedArg(0)+".lastIndexOf("+quotedArg(1)+")"))
+
+    val size = op (Str) ("size", infix, List(), List(MString), MInt)
+    impl (size) (codegen($cala, quotedArg(0)+".size"))
+
+    val substring1 = op (Str) ("substring", infix, List(), List(MString, MInt, MInt), MString)
+    impl (substring1) (codegen($cala, quotedArg(0)+".substring("+quotedArg(1)+", "+quotedArg(2)+")"))
+    val substring2 = op (Str) ("substring", infix, List(), List(MString, MInt), MString)
+    impl (substring2) (codegen($cala, quotedArg(0)+".substring("+quotedArg(1)+")"))
 
     // most of these variants collapse to a common back-end implementation:
     
