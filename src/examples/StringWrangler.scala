@@ -45,7 +45,7 @@ trait StringWranglerDSL extends ForgeApplication with ScalaOps {
 
       // allocation
       // todo test wrong experiment wip dev how to have defaults
-      op (Column) ("apply", static, Nil, (MInt, MString), Column, effect = mutable) implements allocates(Column, ${ array_empty[String]($0)}, ${$0}, ${$1})
+      op (Column) ("apply", static, Nil, (MInt), Column, effect = mutable) implements allocates(Column, ${ array_empty[String]($0)}, ${$0}, ${null})
       
       // getters and setters
       "data" is (compiler, Nil, SArray) implements getter(0, "_data")
@@ -58,6 +58,20 @@ trait StringWranglerDSL extends ForgeApplication with ScalaOps {
         array_update(data($self), $i, $e)
       }
 
+      /* StringWrangler Ops */
+      "copy" is (compiler, (SArray), MUnit, effect = write(0)) implements setter(0, "_data", quotedArg(1)) 
+
+  //"mapWrap" is (compiler, (MString ==> MString, MInt), SSArray) implements map((SArray, SArray), 0, 
+  //${ e => $1(array_apply(data($self), $2)) }
+      "fdsfas" is (compiler, Nil, Column) implements map((MString,MString), 0, ${ e => e })
+
+/*
+      "map" is (compiler, (MString ==> MString, MInt), Column) implements composite ${copy(mapWrap($0, $1, $2))}
+*/
+      //"cut" is (infix, (MString, MInt), Column) implements composite ${ map(_.replaceFirst($1, $2)) }
+
+      "potato" is (compiler, (MInt), MUnit) implements single ${}
+
       parallelize as ParallelCollection(MString,
        lookupOverloaded("apply",1),
        lookup("length"),
@@ -65,22 +79,6 @@ trait StringWranglerDSL extends ForgeApplication with ScalaOps {
        lookup("update") 
       )            
 
-      /* StringWrangler Ops */
-/*
-      "copy" is (compiler, (SSArray), Column) implements setter(0, "_data", quotedArg(1)) 
-
-  //"mapWrap" is (compiler, (MString ==> MString, MInt), SSArray) implements map((SArray, SArray), 0, 
-  //${ e => $1(array_apply(data($self), $2)) }
-      "mapWrap" is (compiler, (MString, MInt), SSArray) implements map((SArray, SArray), 0, 
-        ${ e => $e }
-      )
-  */    
-/*
-      "map" is (compiler, (MString ==> MString, MInt), Column) implements composite ${copy(mapWrap($0, $1, $2))}
-*/
-      //"cut" is (infix, (MString, MInt), Column) implements composite ${ map(_.replaceFirst($1, $2)) }
-
-      //"potato" is (compiler, (MInt), MUnit) implements single ${}
     }                    
                                         
     ()    

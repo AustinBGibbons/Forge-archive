@@ -61,6 +61,9 @@ trait LibGenOps extends BaseGenOps with BaseGenDataStructures {
       case composite:Composite =>
         emitWithIndent(makeOpImplMethodNameWithArgs(o), stream, indent)
       case map:Map =>
+        println(o.retTpe)
+        println(getHkTpe(o.retTpe))
+        println(ForgeCollections(getHkTpe(o.retTpe)))
         val dc = ForgeCollections(getHkTpe(o.retTpe))        
         emitWithIndent("def func: " + quote(map.tpePars._1) + " => " + quote(map.tpePars._2) + " = " + inline(o, map.func), stream, indent)            
         // TODO: this isn't quite right. how do we know which of dc.allocs tpePars is the one that corresponds to our return tpe, e.g. map.tpePars._2?

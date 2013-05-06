@@ -9,7 +9,7 @@ trait HelloWrangler extends StringWranglerApplication {
   def main() = {
     println("hello world")    
     
-    val col = Column(3, "3")
+    val col = Column(3)
 
     col(0) = "0"
     col(2) = "2"
