@@ -25,6 +25,9 @@ trait ForgeArrayOpsExp extends DeliteArrayFatExp {
     = darray_length(__arg0)
   def array_asimmutable[T:Manifest](__arg0: Rep[ForgeArray[T]])(implicit __imp0: SourceContext): Rep[ForgeArray[T]]
     = object_unsafe_immutable(__arg0)
+
+  def array_map[A:Manifest,B:Manifest](__arg0: Rep[ForgeArray[A]], f: Rep[A] => Rep[B])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
+    = darray_map(__arg0, f)
 }
 trait ScalaGenForgeArrayOps extends ScalaGenDeliteArrayOps with ScalaGenPrimitiveOps with ScalaGenObjectOps { val IR: DeliteArrayFatExp with DeliteOpsExp }
 trait CudaGenForgeArrayOps extends CudaGenDeliteArrayOps with CudaGenPrimitiveOps with CudaGenObjectOps { val IR: DeliteArrayFatExp with DeliteOpsExp }

@@ -20,8 +20,8 @@ trait ForgeArrayWrapper extends HUMAN_DSL_NAMEBase {
     = __arg0.length
   def array_asimmutable[T:Manifest](__arg0: Rep[ForgeArray[T]])(implicit __imp0: SourceContext): Rep[ForgeArray[T]]
     = __arg0
+
+  def array_map[A:Manifest,B:Manifest](__arg0: Rep[ForgeArray[A]], f: Rep[A] => Rep[B])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
+    = __arg0.map(f)
 }
-
-
-
 
