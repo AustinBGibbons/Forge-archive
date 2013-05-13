@@ -63,14 +63,14 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "update" is (infix, (("i",MInt),("e",SArray)) :: MUnit, effect = write(0)) implements composite ${
         array_update(data($self), $i, $e)
       }
-
+/*
       parallelize as ParallelCollection(SArray,
        lookupOverloaded("apply",1),
        lookup("length"),
        lookupOverloaded("apply",0),
        lookup("update") 
       )            
-
+*/
       /* 
       * OptiWrangler Ops 
       * We are not using the things up there 
@@ -134,7 +134,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
         $self.map((cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
-          if(index == -1) cell
+          if(index eq -1) cell
           else cell.substring(0, index) + cell.substring(index+result.size)
         }), $2)
       }
@@ -142,7 +142,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "cutRight" is (infix, (MString, MAny) :: Table) implements composite ${
         $self.map((cell => {
           val index = cell.lastIndexOf($1)
-          if(index == -1) cell
+          if(index eq -1) cell
           else cell.substring(0, index) + cell.substring(index + $1.size)
         }), $2)
       }
@@ -164,7 +164,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "split" is (infix, (MString, MAny) :: Table) implements composite ${
         $self.flatMap((cell => {
           val index = cell.indexOf($1)
-          if (index == -1) $self.array(cell, "")
+          if (index eq -1) $self.array(cell, "")
           else $self.array(cell.substring(0, index), cell.substring(index+$1.size))
         }), $2)
       }
@@ -173,7 +173,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
         $self.flatMap((cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
-          if (index == -1) $self.array(cell, "")
+          if (index eq -1) $self.array(cell, "")
           else $self.array(cell.substring(0, index), cell.substring(index+result.size))
         }), $2)
       }
@@ -181,7 +181,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "splitRight" is (infix, (MString, MAny) :: Table) implements composite ${
         $self.flatMap((cell => {
           val index = cell.lastIndexOf($1)
-          if (index == -1) $self.array(cell, "")
+          if (index eq -1) $self.array(cell, "")
           else $self.array(cell.substring(0, index), cell.substring(index+$1.size))
         }), $2)
       }
@@ -201,7 +201,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
 
       "extract" is (infix, (MString, MAny) :: Table) implements composite ${
         $self.flatMap(cell => {
-          if(cell.indexOf($1) == -1) $self.array(cell, "")
+          if(cell.indexOf($1) eq -1) $self.array(cell, "")
           else $self.array(cell, $1)
         }, $2)
       }
@@ -209,7 +209,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "extract" is (infix, (MString ==> MString, MAny) :: Table) implements composite ${
         $self.flatMap(cell => {
           val result = $1(cell)
-          if(cell.indexOf(result) == -1) $self.array(cell, "")
+          if(cell.indexOf(result) eq -1) $self.array(cell, "")
           else $self.array(cell, result)
           $self.array(cell, cell)
         }, $2)

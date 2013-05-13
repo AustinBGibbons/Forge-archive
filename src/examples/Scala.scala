@@ -90,8 +90,8 @@ trait ScalaOps extends ForgeApplication {
     impl (le) (codegen($cala, lt.quotedArg(0) + " <= " + lt.quotedArg(1)))    
     impl (ge) (codegen($cala, gt.quotedArg(0) + " >= " + gt.quotedArg(1)))
 
-    val eq = op (Ord) ("==", infix, List(T withBound TOrdering), List(T,T) :: MBoolean)
-    val ne = op (Ord) ("!=", infix, List(T withBound TOrdering), List(T,T) :: MBoolean)
+    val eq = op (Ord) ("eq", infix, List(T withBound TOrdering), List(T,T) :: MBoolean)
+    val ne = op (Ord) ("neq", infix, List(T withBound TOrdering), List(T,T) :: MBoolean)
     
     impl (eq) (codegen($cala, quotedArg(0) + " == " + quotedArg(1)))
     impl (ne) (codegen($cala, quotedArg(0) + " != " + quotedArg(1)))
