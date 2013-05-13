@@ -63,14 +63,14 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "update" is (infix, (("i",MInt),("e",SArray)) :: MUnit, effect = write(0)) implements composite ${
         array_update(data($self), $i, $e)
       }
-/*
+
       parallelize as ParallelCollection(SArray,
        lookupOverloaded("apply",1),
        lookup("length"),
        lookupOverloaded("apply",0),
        lookup("update") 
       )            
-*/
+
       /* 
       * OptiWrangler Ops 
       * We are not using the things up there 
