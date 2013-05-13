@@ -29,6 +29,9 @@ trait ForgeArrayOpsExp extends DeliteArrayFatExp {
 
   def array_map[A:Manifest,B:Manifest](a: Rep[ForgeArray[A]], f: Rep[A] => Rep[B])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
     = darray_map(a, f)
+  // unnecessary constraint that f creates a ForgeArray?
+  def array_flatmap[A:Manifest,B:Manifest](a: Rep[ForgeArray[A]], f: Rep[A] => Rep[ForgeArray[B]])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
+    = array_reduce[ForgeArray[B]](array_map[A,ForgeArray[B]](a, f), array_union[B], array_empty[B](unit(0)))
   def array_zipwith[A:Manifest,B:Manifest,R:Manifest](x: Rep[ForgeArray[A]], y: Rep[ForgeArray[B]], f: (Rep[A],Rep[B]) => Rep[R])(implicit __imp0: SourceContext): Rep[ForgeArray[R]]
     = darray_zipwith(x, y, f)
   def array_reduce[A:Manifest](x: Rep[ForgeArray[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A])(implicit __imp0: SourceContext): Rep[A]

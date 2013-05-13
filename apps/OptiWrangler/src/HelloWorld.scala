@@ -14,9 +14,13 @@ trait HelloWrangler extends OptiWranglerApplication {
    // col(0) = Array("1")
     //col(2) = Array("3")
 
-    val cutcol = col.cut(1)
+    val cutcol = col.cut(1, null)
 
     println(cutcol(0,0))
     println(cutcol(1, 0))
+
+    val splitcol = col.split(1, null)
+    println(cutcol(0, 0) + "," + cutcol(0, 1))
+    println(cutcol(1, 0) + "," + cutcol(1, 1))
   }
 }
