@@ -9,6 +9,7 @@ trait HelloWrangler extends OptiWranglerApplication {
   def main() = {
     println("hello world")    
     val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
+    //val col = Table("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
 
    // col(0) = Array("1")
     //col(2) = Array("3")

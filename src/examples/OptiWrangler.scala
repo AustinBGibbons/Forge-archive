@@ -76,6 +76,15 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       * It is presently necessary infrastructure
       */
 
+      // Friends and Helpers
+  
+      "map" is (infix, (String ==> String, MAny), Table) implements composite ${
+        val indices = getColumns($2)
+        array_map(data($self), row => row)
+      }
+
+      // API
+
       "cutRow" is (infix, (MInt, SArray), SArray) implements composite ${
         array_map[String, String]($2, cell =>
           if($1 >= cell.size) cell
@@ -89,10 +98,11 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       }
 
       // IO - could be better
+      // static?
       "fromFile" is (infix, MString, SSArray) implements codegen ($cala, ${
         scala.io.Source.fromFile($1).getLines().map(_.split(",").toArray).toArray
       }) // tpdo - use split etc. etc.
-      "tableFromFile" is (infix, MString, Table) implements single ${ //single?
+      "tableFromFile" is (infix, MString, Table) implements composite ${ 
         val d = $self.fromFile($1)
         Table(d, array_length(d), "")
       }
