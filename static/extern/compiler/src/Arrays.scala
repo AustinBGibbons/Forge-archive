@@ -29,9 +29,9 @@ trait ForgeArrayOpsExp extends DeliteArrayFatExp {
 
   def array_map[A:Manifest,B:Manifest](a: Rep[ForgeArray[A]], f: Rep[A] => Rep[B])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
     = darray_map(a, f)
-  def array_zipwith[A:Manifest,B:Manifest,R:Manifest](x: Rep[ForgeArray[A]], y: Rep[ForgeArray[B]], f: (Rep[A],Rep[B])(implicit __imp0: SourceContext) => Rep[R])(implicit __imp0: SourceContext): Rep[ForgeArray[R]]
+  def array_zipwith[A:Manifest,B:Manifest,R:Manifest](x: Rep[ForgeArray[A]], y: Rep[ForgeArray[B]], f: (Rep[A],Rep[B]) => Rep[R])(implicit __imp0: SourceContext): Rep[ForgeArray[R]]
     = darray_zipwith(x, y, f)
-  def array_reduce[A:Manifest](x: Rep[ForgeArray[A]], f: (Rep[A],Rep[A])(implicit __imp0: SourceContext) => Rep[A], zero: Rep[A])(implicit __imp0: SourceContext): Rep[A]
+  def array_reduce[A:Manifest](x: Rep[ForgeArray[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A])(implicit __imp0: SourceContext): Rep[A]
     = darray_reduce(x, f, zero)
   def array_filter[A:Manifest](x: Rep[ForgeArray[A]], f: Rep[A] => Rep[Boolean])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
     = darray_filter(x, f)
@@ -41,7 +41,7 @@ trait ForgeArrayOpsExp extends DeliteArrayFatExp {
     = darray_union(lhs, rhs)
   def array_intersect[A:Manifest](lhs: Rep[ForgeArray[A]], rhs: Rep[ForgeArray[A]])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
     = darray_intersect(lhs, rhs)
-  def array_take[A:Manifest](lhs: Rep[ForgeArray[A]], n: Rep[Int])(implicit __imp0: SourceContext)(implicit ctx: SourceContext): Rep[ForgeArray[A]]
+  def array_take[A:Manifest](lhs: Rep[ForgeArray[A]], n: Rep[Int])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
     = darray_take(lhs, n)
   //def array_sort[A:Manifest](lhs: Rep[ForgeArray[A]])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
   //  = darray_sort(lhs)

@@ -24,9 +24,9 @@ trait ForgeArrayWrapper extends HUMAN_DSL_NAMEBase {
 
   def array_map[A:Manifest,B:Manifest](a: Rep[ForgeArray[A]], f: Rep[A] => Rep[B])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
     = a.map(f)
-  def array_zipwith[A:Manifest,B:Manifest,R:Manifest](x: Rep[ForgeArray[A]], y: Rep[ForgeArray[B]], f: (Rep[A],Rep[B])(implicit __imp0: SourceContext) => Rep[R])(implicit __imp0: SourceContext): Rep[ForgeArray[R]]
+  def array_zipwith[A:Manifest,B:Manifest,R:Manifest](x: Rep[ForgeArray[A]], y: Rep[ForgeArray[B]], f: (Rep[A],Rep[B]) => Rep[R])(implicit __imp0: SourceContext): Rep[ForgeArray[R]]
     = x.zip(y).map{case(x,y) => f(x,y)}
-  def array_reduce[A:Manifest](x: Rep[ForgeArray[A]], f: (Rep[A],Rep[A])(implicit __imp0: SourceContext) => Rep[A], zero: Rep[A])(implicit __imp0: SourceContext): Rep[A]
+  def array_reduce[A:Manifest](x: Rep[ForgeArray[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A])(implicit __imp0: SourceContext): Rep[A]
     = x.reduce(f)
   def array_filter[A:Manifest](x: Rep[ForgeArray[A]], f: Rep[A] => Rep[Boolean])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
     = x.filter(f)
@@ -36,7 +36,7 @@ trait ForgeArrayWrapper extends HUMAN_DSL_NAMEBase {
     = lhs.union(rhs)
   def array_intersect[A:Manifest](lhs: Rep[ForgeArray[A]], rhs: Rep[ForgeArray[A]])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
     = lhs.intersect(rhs)
-  def array_take[A:Manifest](lhs: Rep[ForgeArray[A]], n: Rep[Int])(implicit __imp0: SourceContext)(implicit ctx: SourceContext): Rep[ForgeArray[A]]
+  def array_take[A:Manifest](lhs: Rep[ForgeArray[A]], n: Rep[Int])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
     = lhs.take(n)
   //def array_sort[A:Manifest](lhs: Rep[ForgeArray[A]])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
   //  = { scala.math.Sorting.quickSort(lhs) ; lhs }
