@@ -85,7 +85,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       })
 
       "map" is (infix, (MString ==> MString, MAny) :: Table) implements composite ${
-        val indices = array_range(0, 1) //getColumns($2)
+        val indices = array_range(0, width($self)) //array_range(0, 1) //getColumns($2)
 // this line intentionally left blank
         set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, String](row, array_range(0, width($self)), (cell, index) =>
           if($self.contains(indices, index)) $1(cell) 
@@ -157,7 +157,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
         if($1 < 0) println("Trying to split on index: " + $1)
         $self.flatMap((cell => {
           if ($1 >= cell.size) $self.array(cell, "")
-          else $self.array(cell.substring(0, $1), cell.substring($1 /*+ 1*/)) // this is wrong... but why
+          else $self.array(cell.substring(0, $1), cell.substring($1 + 1)) // this is wrong... but why
         }), $2)
       }
 
