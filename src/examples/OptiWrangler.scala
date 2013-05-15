@@ -87,7 +87,8 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "map" is (infix, (MString ==> MString, MAny) :: Table) implements composite ${
         val indices = array_range(0, width($self)) //array_range(0, 1) //getColumns($2)
 // this line intentionally left blank
-        set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, String](row, array_range(0, width($self)), (cell, index) =>
+        //set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, String](row, array_range(0, width($self)), (cell, index) =>
+        set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, String](row, indices), (cell, index) =>
           if($self.contains(indices, index)) $1(cell) 
           else cell
         )))
@@ -107,7 +108,7 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
       "flatMap" is (infix, (MString ==> SArray, MAny) :: Table) implements composite ${
         val indices = array_range(0, 1) //getColumns($2)
 // this line intentionally left blank
-        set_data($self, array_flatmap[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, ForgeArray[String]](row, array_range(0, width($self)), (cell, index) =>
+        set_data($self, array_flatmap[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, ForgeArray[String]](row, indices), (cell, index) =>
           if($self.contains(indices, index)) $1(cell)
           else $self.array(cell)
         )))
