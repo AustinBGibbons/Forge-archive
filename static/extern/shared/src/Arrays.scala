@@ -12,13 +12,18 @@ trait ForgeArrayOps extends Base {
    */
   type ForgeArray[T]
   implicit def forgeArrayManifest[T:Manifest]: Manifest[ForgeArray[T]]
-}
-trait ForgeArrayCompilerOps extends ForgeArrayOps {  
   
+  /* Required for apps to be able use 'args' */
+  implicit class ScalaArrayOps[T:Manifest](x: Rep[Array[T]]) {
+    def apply(n: Rep[Int])(implicit ctx: SourceContext) = scala_array_apply(x,n)
+  }
+  def scala_array_apply[T:Manifest](x: Rep[Array[T]], n: Rep[Int])(implicit __imp0: SourceContext): Rep[T]
+}
+trait ForgeArrayCompilerOps extends ForgeArrayOps {    
   /**
    * There are some unfortunate scalac typer crashes when we try to use the nicer front-end from DSLs :(
    */
-  object Array {
+  object Array { 
     def empty[T:Manifest](__arg0: Rep[Int])(implicit __imp0: SourceContext) = array_empty[T](__arg0)
     def copy[T:Manifest](__arg0: Rep[ForgeArray[T]],__arg1: Rep[Int],__arg2: Rep[ForgeArray[T]],__arg3: Rep[Int],__arg4: Rep[Int])(implicit __imp0: SourceContext) = array_copy(__arg0,__arg1,__arg2,__arg3,__arg4)
   }
@@ -49,4 +54,6 @@ trait ForgeArrayCompilerOps extends ForgeArrayOps {
   //def array_sort[A:Manifest](lhs: Rep[ForgeArray[A]])(implicit __imp0: SourceContext): Rep[ForgeArray[A]]
   def array_range(st: Rep[Int], en: Rep[Int])(implicit __imp0: SourceContext): Rep[ForgeArray[Int]]
   def array_toseq[A:Manifest](a: Rep[ForgeArray[A]])(implicit __imp0: SourceContext): Rep[Seq[A]]
+  
+  def scala_array_apply[T:Manifest](__arg0: Rep[Array[T]],__arg1: Rep[Int])(implicit __imp0: SourceContext): Rep[T] 
 }
