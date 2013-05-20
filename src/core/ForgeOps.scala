@@ -363,8 +363,6 @@ trait ForgeOpsExp extends ForgeSugar with BaseExp {
     // if (dc.update.args.size != 3 || (getHkTpe(dc.update.args.apply(0).tpe), dc.update.args.apply(1).tpe, dc.update.args.apply(2).tpe) != (tpe, MInt, dc.tpeArg) || (dc.update.retTpe != MUnit))
     //   err("dcUpdate must take arguments of type (" + tpe.name + ", " + MInt.name + ", " + dc.tpeArg.name + ") and return " + MUnit.name)
     println("\n<(^_^)>\n")
-    println(tpe)
-    println("\n")
     ForgeCollections += (tpe -> dc)
     ()
   }

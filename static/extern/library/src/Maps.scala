@@ -7,9 +7,9 @@ import LOWERCASE_DSL_NAME.library.HUMAN_DSL_NAMEBase
 
 //abstract class SmallMap[K,V]
 trait SmallMapWrapper extends HUMAN_DSL_NAMEBase {
-  abstract class SmallMap[K,V]
-  //type SmallMap[K,V] = scala.collection.mutable.HashMap[K,V]
-  implicit def forgeMapManifest[K:Manifest, V:Manifest] = manifest[scala.collection.mutable.Map[K,V]] 
+  //abstract class SmallMap[K,V]
+  type SmallMap[K,V] = scala.collection.mutable.HashMap[K,V]
+  implicit def smallMapManifest[K:Manifest, V:Manifest] = manifest[scala.collection.mutable.HashMap[K,V]] 
 
   def map_empty[K:Manifest, V:Manifest]()(implicit __imp0: SourceContext): Rep[SmallMap[K,V]] 
     = new SmallMap[K,V]()

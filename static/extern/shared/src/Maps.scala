@@ -8,9 +8,9 @@ import scala.virtualization.lms.common._
 //abstract class SmallMap[K,V]
 trait LiftSmallMaps
 trait SmallMapOps extends Base {
-  abstract class SmallMap[K,V]
-  //type SmallMap[K,V]
-  implicit def forgeMapManifest[K:Manifest, V:Manifest]: Manifest[SmallMap[K,V]]
+  //abstract class SmallMap[K,V]
+  type SmallMap[K,V]
+  implicit def smallMapManifest[K:Manifest, V:Manifest]: Manifest[SmallMap[K,V]]
   
   /* Required for apps to be able use 'args' */
 /*

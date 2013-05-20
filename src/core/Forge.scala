@@ -54,6 +54,7 @@ trait ForgeExp extends Forge with ForgeUtilities with ForgeScalaOpsPkgExp with D
     case `MInt` | `MDouble` | `MBoolean` | `MString` | `MUnit` | `MAny` | `MSourceContext` | `byName` => true
     case `CInt` | `CDouble` | `CBoolean` | `CString` | `CUnit` | `CAny` => true
     case Def(Tpe("ForgeArray",_,_)) | Def(Tpe("Var",_,_)) | Def(Tpe("Overloaded",_,_)) => true
+    case Def(Tpe("SmallMap",_,_)) => true // gibbons4
     case _ => false
   }
   

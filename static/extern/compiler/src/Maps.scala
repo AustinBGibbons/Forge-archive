@@ -12,17 +12,18 @@ import ppl.delite.framework.datastructures._
 //trait SmallMapOpsExp {
 //trait SmallMapOpsExp extends DeliteMapFatExp {
 
-abstract class SmallMap[K,V]
+//abstract class SmallMap[K,V]
 trait SmallMapOpsExp /*extends DeliteArrayFatExp*/ extends EffectExp {
   this: DeliteOpsExp => //?
 
-  abstract class SmallMap[K,V]
+  //abstract class CompilerMap[K,V]
+  type SmallMap[K,V] = scala.collection.mutable.HashMap[K,V] //CompilerMap[K,V]
   abstract class SmallMapDef[K:Manifest,V:Manifest,R:Manifest] extends Def[R] {
     val mK = manifest[K]
     val mV = manifest[V]
   }
   //type SmallMap[K,V] = scala.collection.mutable.HashMap[K,V]
-  //implicit def forgeMapManifest[K:Manifest, V:Manifest] = manifest[scala.collection.mutable.Map[K,V]]
+  implicit def smallMapManifest[K:Manifest, V:Manifest] = manifest[scala.collection.mutable.HashMap[K,V]]
   
   case class MapNew[K:Manifest, V:Manifest]() extends SmallMapDef[K,V,SmallMap[K,V]]
   case class MapPut[K:Manifest, V:Manifest](m: Exp[SmallMap[K,V]], key: Exp[K], value: Exp[V]) extends SmallMapDef[K,V,Unit]
@@ -72,7 +73,7 @@ trait CLikeGenSmallMapOps extends CLikeGenBase {
 }
 
 trait CudaGenSmallMapOps /* extends CudaGenDeliteMapOps */ extends CLikeGenSmallMapOps with CudaGenPrimitiveOps with CudaGenObjectOps { val IR: SmallMapOpsExp with DeliteOpsExp }
-trait OpenCLGenForgeMapOps /* extends OpenCLGenDeliteArrayOps */ extends CLikeGenSmallMapOps with OpenCLGenPrimitiveOps with OpenCLGenObjectOps { val IR: SmallMapOpsExp with DeliteOpsExp }
+trait OpenCLGenSmallMapOps /* extends OpenCLGenDeliteArrayOps */ extends CLikeGenSmallMapOps with OpenCLGenPrimitiveOps with OpenCLGenObjectOps { val IR: SmallMapOpsExp with DeliteOpsExp }
 trait CGenSmallMapOps /* extends CGenDeliteMapOps */ extends CGenPrimitiveOps with CGenObjectOps {
   val IR: SmallMapOpsExp with DeliteOpsExp
   import IR._
