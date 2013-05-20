@@ -50,8 +50,10 @@ trait ForgeOps extends Base {
   def infix_as(p: ParallelizeKey, dc: ParallelCollectionBuffer) = forge_isparallelcollection_buffer(p.tpe, dc)    
 
   implicit def forceOpOption(o: Option[Rep[DSLOp]]): Rep[DSLOp]
+  //implicit def forceTpeOption(o: Option[Rep[DSLType]]): Rep[DSLType]
   def lookup(grpName: String, opName: String): Option[Rep[DSLOp]] = forge_lookup(grpName,opName,0)
   def lookupOverloaded(grpName: String, opName: String, index: Int) = forge_lookup(grpName,opName,index)
+  def lookupTpe(tpeName: String/*, Hiearchy */) = forge_lookupTpe(tpeName)
   
   def forge_grp(name: String): Rep[DSLGroup]  
   def forge_tpealias(name: String, tpe: Rep[DSLType]): Rep[TypeAlias]
@@ -71,6 +73,7 @@ trait ForgeOps extends Base {
   def forge_isparallelcollection(tpe: Rep[DSLType], dc: ParallelCollection): Rep[Unit]
   def forge_isparallelcollection_buffer(tpe: Rep[DSLType], dc: ParallelCollectionBuffer): Rep[Unit]
   def forge_lookup(grpName: String, opName: String, overloadedIndex: Int): Option[Rep[DSLOp]]  
+  def forge_lookupTpe(tpeName: String): Rep[DSLType]
 }
 
 trait ForgeSugarLowPriority extends ForgeOps with ForgeUtilities {
@@ -164,6 +167,7 @@ trait ForgeSugar extends ForgeSugarLowPriority {
     def lookup(grpName: String, opName: String) = forge_lookup(grpName,opName,0)    
     def lookupOverloaded(opName: String, index: Int) = forge_lookup(_tpeScopeBox.name,opName,index)
     def lookupOverloaded(grpName: String, opName: String, index: Int) = forge_lookup(grpName,opName,index)
+    def lookupTpe(tpeName: String) = forge_lookupTpe(tpeName)
   }
   
   trait TpeScopeRunner extends TpeScope {
@@ -209,6 +213,20 @@ trait ForgeOpsExp extends ForgeSugar with BaseExp {
     }
   }
        
+/*
+  def forceTpeOption(o: Option[Rep[DSLType]]): Rep[DSLType] = {
+    if (o.isEmpty) (err("Empty option " + o + " used as in place of a type"))
+    o.get
+  }
+*/
+
+  def forge_lookupTpe(tpeName: String): Rep[DSLType] = {
+    Tpes.find(x => x.name == tpeName) match {
+      case None => err("Type " + tpeName + " not found in lookupTpe")
+      case Some(x) => x
+    }
+  }
+
   /**
    * IR Definitions
    */
