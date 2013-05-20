@@ -35,7 +35,7 @@ trait UserSetDSL /*extends ForgeApplication with ScalaOps*/ extends SetOps {
   
     // allocation
     //op (UserSet) ("apply", static, T, Nil :: UserSet(T), effect = mutable) implements allocates(UserSet, /*${$0},*/ ${ empty_set() })
-    op (UserSet) ("apply", static, T, Nil :: UserSet(T), effect = mutable) implements allocates (UserSet, ${XSet[T]()})
+    static (UserSet) ("apply", T, Nil :: UserSet(T), effect = mutable) implements allocates (UserSet, ${XSet[T]()})
     
     // doesn't rewrite correctly if we use "withTpe (UserSet) {", but works if we use:
     val UserSetOps = withTpe (UserSet)
@@ -43,7 +43,7 @@ trait UserSetDSL /*extends ForgeApplication with ScalaOps*/ extends SetOps {
     UserSetOps {
       //"apply" is (static, T, Nil :: UserSet(T), effect = mutable) implements single ${Set[T]()}
       //"userset_data" is (compiler, Nil :: Set) implements getter (0, "_data")
-      "userContains" is (infix, T :: MBoolean) implements composite ${
+      infix ("userContains") (T :: MBoolean) implements composite ${
         //userset_data($self).contains($1)
         false
 /*
