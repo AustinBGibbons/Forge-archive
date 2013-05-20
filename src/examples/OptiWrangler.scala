@@ -110,33 +110,17 @@ trait OptiWranglerDSL extends ForgeApplication with ScalaOps {
         just testing
       */
 
-///*
       "putHeader" is (infix, (MString, MInt) :: MUnit, effect = write(0)) implements composite ${
         map_put[String, Int](header($self), $1, $2)
       }
-//*/
 
-///*
       "getHeader" is (infix, MString :: MInt) implements composite ${
         map_getOrElse[String, Int](header($self), $1, -1) match {
-//*/
-          /*
-          case Def(p) => p match {
-            //case q: MInt=> {println("found a MInt") ; q}
-            case r: Int=> {println("lifting with unit") ; unit(r)}
-            case _ => {println("failed to match map_get outer") ; unit(-1)}
-          }
-          */
-///*
           case x: Int => {println("found an int") ; x}
-          //case y: MInt => {println("found an mint") ; y}
           case z: Rep[Int] => {println("found an rep[int]") ; z}
-          //case a: Rep[MInt] => {println("found an rep[mint]") ; a}
-          //case y: Def(z) => {println("Found somethinf in a def()") ; z}
           case _ => {println("failed to match map_get outer") ; unit(-1)}
         }
       }
-//*/
 
       // Friends and Helpers
 

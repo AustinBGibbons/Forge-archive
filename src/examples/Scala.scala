@@ -106,10 +106,10 @@ trait ScalaOps extends ForgeApplication {
 
     val xcharAt = op (Str) ("xcharAt", infix, List(), List(MString, MInt) :: MString)
     impl (xcharAt) (codegen($cala, quotedArg(0)+"("+quotedArg(1)+").toString"))
-
+/*
     val split = op (Str) ("split", infix, List(), List(MString, MString) :: MArray(MString))
     impl (split) (codegen($cala, quotedArg(0)+".split("+quotedArg(1)+")"))
-
+*/
     val replaceFirst = op (Str) ("replaceFirst", infix, List(), List(MString, MString, MString) :: MString)
     impl (replaceFirst) (codegen($cala, quotedArg(0)+".replaceFirst("+quotedArg(1)+", "+quotedArg(2)+")"))
 
