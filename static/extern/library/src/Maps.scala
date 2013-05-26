@@ -23,5 +23,7 @@ trait SmallMapWrapper extends HUMAN_DSL_NAMEBase {
   //def map_get[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K])(implicit __imp0: SourceContext): Rep[Optiom[R]]
   def map_getOrElse[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K], default: /*=>*/ Rep[V])(implicit __imp0: SourceContext): Rep[Any]
     = m.getOrElse(key, default) // options?
+  def map_contains[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K])(implicit __imp0: SourceContext): Rep[Boolean]
+    = m.contains(key)
 }
 

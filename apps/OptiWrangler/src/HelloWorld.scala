@@ -8,17 +8,23 @@ object HelloWranglerInterpreter extends OptiWranglerApplicationInterpreter with 
 trait HelloWrangler extends OptiWranglerApplication { 
   def main() = {
     println("hello world")    
-    val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
-    //val col = Table("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
+    println(args(0))
+    //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
+    val col = Table(0, "").tableFromFile(args(0))
 
    // col(0) = Array("1")
     //col(2) = Array("3")
 
-    val cutcol = col.cut(1, null)
-
+    col.cutAll("\"").cut("1")
+      .tableToFile("/afs/cs.stanford.edu/u/gibbons4/data/")
+/*
     println(cutcol(0,0))
     println(cutcol(1, 0))
 
+    println(cutcol.getColumn(1))
+    println(cutcol.getColumn("2"))
+*/
+/*
     val splitcol = col.split(1, null)
     println(cutcol(0, 0) + "," + cutcol(0, 1))
     println(cutcol(1, 0) + "," + cutcol(1, 1))
@@ -27,5 +33,6 @@ trait HelloWrangler extends OptiWranglerApplication {
     cutcol.putHeader("two", 1)
     
     println(cutcol.getHeader("one"))
+*/
   }
 }

@@ -11,7 +11,7 @@ trait Count extends OptiWranglerApplication {
     //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/small.csv")
     val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/medium_well.csv")
     // don't worry about these nulls
-    val writeMe = col.cut("\"", null).cut("1", null).cut("3", null)//.split("5", null)
+    val writeMe = col.cutAll("\"").cutAll("1").cutAll("3")//.split("5")
     println(writeMe(15,2))
   }
 }

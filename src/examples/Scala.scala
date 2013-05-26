@@ -77,20 +77,58 @@ trait ScalaOps extends ForgeApplication {
   def ordering() = {
     val Ord = grp("Ordering2") // Ordering gets pulled in by DeliteArrayOps, need to disambiguate
     val T = tpePar("T")
-    
-    val lt = infix (Ord) ("<", List(T withBound TOrdering), List(T,T) :: MBoolean)    
-    val gt = infix (Ord) (">", List(T withBound TOrdering), List(T,T) :: MBoolean)    
-    
-    impl (lt) (codegen($cala, quotedArg(0) + " < " + quotedArg(1)))    
+
+    val lt = infix (Ord) ("<", List(T withBound TOrdering), List(T,T) :: MBoolean)
+    val gt = infix (Ord) (">", List(T withBound TOrdering), List(T,T) :: MBoolean)
+
+    impl (lt) (codegen($cala, quotedArg(0) + " < " + quotedArg(1)))
     impl (gt) (codegen($cala, quotedArg(0) + " > " + quotedArg(1)))
+
+    val le = infix (Ord) ("le", List(T withBound TOrdering), List(T,T) :: MBoolean)
+    val ge = infix (Ord) ("ge", List(T withBound TOrdering), List(T,T) :: MBoolean)
+
+    impl (le) (codegen($cala, quotedArg(0) + " <= " + quotedArg(1)))
+    impl (ge) (codegen($cala, quotedArg(0) + " >= " + quotedArg(1)))
+
+    val eq = infix (Ord) ("eq", List(T withBound TOrdering), List(T,T) :: MBoolean)
+    val ne = infix (Ord) ("neq", List(T withBound TOrdering), List(T,T) :: MBoolean)
+
+    impl (eq) (codegen($cala, quotedArg(0) + " == " + quotedArg(1)))
+    impl (ne) (codegen($cala, quotedArg(0) + " != " + quotedArg(1)))
   }
   
   def strings() = {
-    val Str = grp("String")
+    val Str = grp("FString")
     lift (Str) (MString)
     
     // overloaded variants of string concat
     val T = tpePar("T") 
+
+    val xcharAt = infix (Str) ("xcharAt", List(), List(MString, MInt) :: MString)
+    impl (xcharAt) (codegen($cala, quotedArg(0)+"("+quotedArg(1)+").toString"))
+
+    val xsplit = infix (Str) ("xsplit", List(), List(MString, MString) :: MArray(MString))
+    impl (xsplit) (codegen($cala, quotedArg(0)+".split("+quotedArg(1)+")"))
+
+    val replaceFirst = infix (Str) ("replaceFirst", List(), List(MString, MString, MString) :: MString)
+    impl (replaceFirst) (codegen($cala, quotedArg(0)+".replaceFirst("+quotedArg(1)+", "+quotedArg(2)+")"))
+
+    val replaceAllLiterally = infix (Str) ("replaceAllLiterally", List(), List(MString, MString, MString) :: MString)
+    impl (replaceAllLiterally) (codegen($cala, quotedArg(0)+".replaceAllLiterally("+quotedArg(1)+", "+quotedArg(2)+")"))
+
+    val indexOf = infix (Str) ("indexOf", List(), List(MString, MString) :: MInt)
+    impl (indexOf) (codegen($cala, quotedArg(0)+".indexOf("+quotedArg(1)+")"))
+
+    val lastIndexOf = infix (Str) ("lastIndexOf", List(), List(MString, MString) :: MInt)
+    impl (lastIndexOf) (codegen($cala, quotedArg(0)+".lastIndexOf("+quotedArg(1)+")"))
+
+    val size = infix (Str) ("size", List(), List(MString) :: MInt)
+    impl (size) (codegen($cala, quotedArg(0)+".size"))
+
+    val substring1 = infix (Str) ("substring", List(), List(MString, MInt, MInt) :: MString)
+    impl (substring1) (codegen($cala, quotedArg(0)+".substring("+quotedArg(1)+", "+quotedArg(2)+")"))
+    val substring2 = infix (Str) ("substring", List(), List(MString, MInt) :: MString)
+    impl (substring2) (codegen($cala, quotedArg(0)+".substring("+quotedArg(1)+")"))
 
     // most of these variants collapse to a common back-end implementation:
     
@@ -142,5 +180,9 @@ trait ScalaOps extends ForgeApplication {
   def booleans() = {
     val Bool = grp("Boolean")
     lift (Bool) (MBoolean)    
+
+    //val not = infix (Bool) ( "!", List(), MBoolean :: MBoolean) implements codegen ($cala, ${!$0})
+    direct (Bool) ( "not", List(), MBoolean :: MBoolean) implements codegen ($cala, ${!$0})
+    //direct (Bool) ( "or", List(), (MBoolean, MBoolean) :: MBoolean) implements codegen ($cala, ${$0 || $1})
   }
 }

@@ -29,6 +29,7 @@ trait SmallMapOpsExp /*extends DeliteArrayFatExp*/ extends EffectExp {
   case class MapPut[K:Manifest, V:Manifest](m: Exp[SmallMap[K,V]], key: Exp[K], value: Exp[V]) extends SmallMapDef[K,V,Unit]
   //https://issues.scala-lang.org/browse/SI-7090
   case class MapGetOrElse[K:Manifest, V:Manifest](m: Exp[SmallMap[K,V]], key: Exp[K], default: /*=>*/ Exp[V]) extends SmallMapDef[K,V,Any] /* V */
+  case class MapContains[K:Manifest, V:Manifest](m: Exp[SmallMap[K,V]], key: Exp[K]) extends SmallMapDef[K,V,Boolean] 
 
   def map_empty[K:Manifest, V:Manifest]()(implicit __imp0: SourceContext): Rep[SmallMap[K,V]] 
     = reflectMutable(MapNew[K,V]()) 
@@ -36,10 +37,14 @@ trait SmallMapOpsExp /*extends DeliteArrayFatExp*/ extends EffectExp {
     = reflectWrite(m)(MapPut[K,V](m, key, value))
   def map_getOrElse[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K], default: /*=>*/ Rep[V])(implicit __imp0: SourceContext): Rep[Any] /*V*/ 
     = MapGetOrElse[K,V](m, key, default) //m.getOrElse(key, default) // Options?
+  def map_contains[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K])(implicit __imp0: SourceContext): Rep[Boolean] /*V*/ 
+    = MapContains[K,V](m, key) 
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = ( e match {
+    case e@MapContains(m,k) => map_contains(f(m),f(k))(e.mK,e.mV,pos)
     case e@MapGetOrElse(m,k,d) => map_getOrElse(f(m),f(k),f(d))(e.mK,e.mV,pos)
     case Reflect(e@MapNew(), u, es) => reflectMirrored(Reflect(MapNew()(e.mK,e.mV), mapOver(f,u), f(es)))(mtype(manifest[A]))
+    case Reflect(e@MapContains(m,k), u, es) => reflectMirrored(Reflect(MapContains(f(m),f(k))(e.mK,e.mV), mapOver(f,u), f(es)))(mtype(manifest[A]))
     case Reflect(e@MapGetOrElse(m,k,d), u, es) => reflectMirrored(Reflect(MapGetOrElse(f(m),f(k),f(d))(e.mK,e.mV), mapOver(f,u), f(es)))(mtype(manifest[A]))
     case Reflect(e@MapPut(m,k,v), u, es) => reflectMirrored(Reflect(MapPut(f(m),f(k),f(v))(e.mK,e.mV), mapOver(f,u), f(es)))(mtype(manifest[A]))
     case _ => super.mirror(e,f)
@@ -55,6 +60,7 @@ trait ScalaGenSmallMapOps /* extends ScalaGenDeliteMapOps */ extends ScalaGenPri
     case m@MapNew() => emitValDef(sym, "new scala.collection.mutable.HashMap["+remap(m.mK)+"," + remap(m.mV)+"]()")
     case MapPut(m,k,v) => emitValDef(sym, "" + quote(m) + ".put(" + quote(k) + ", " + quote(v) + ")")
     case MapGetOrElse(m,k,d) => emitValDef(sym, "" + quote(m) + ".getOrElse(" + quote(k) + ", " + quote(d) + ")")
+    case MapContains(m,k) => emitValDef(sym, "" + quote(m) + ".contains(" + quote(k) + ")")
     case _ => super.emitNode(sym,rhs)
   }
 }
