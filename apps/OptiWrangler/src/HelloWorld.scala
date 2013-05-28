@@ -10,13 +10,21 @@ trait HelloWrangler extends OptiWranglerApplication {
     println("hello world")    
     //println(args(0))
     //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
+    val now = System.nanoTime
     val col = Table(0, "").tableFromFile(args(0))
-
+    println("Loaded from file : " + ((System.nanoTime - now) / 1e6))
    // col(0) = Array("1")
     //col(2) = Array("3")
+  
+    val now2 = System.nanoTime
+    val x = col.cutAll("\"").cut("1")
+    println("Cut : " + ((System.nanoTime - now2) / 1e6))
+    
+    val now3 = System.nanoTime
+    x.tableToFile("/afs/cs.stanford.edu/u/gibbons4/data/")
+    println("Written to file : " + ((System.nanoTime - now3) / 1e6))
 
-    col.cutAll("\"").cut("1")
-      .tableToFile("/afs/cs.stanford.edu/u/gibbons4/data/")
+    println("just kidding none of that is blocking.")
 /*
     println(cutcol(0,0))
     println(cutcol(1, 0))

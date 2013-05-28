@@ -398,7 +398,6 @@ trait OptiWranglerDSL extends Base {
       // API 
 
       // CUT
-/*
       infix ("cut") ((MInt, MAny) :: Table) implements composite ${
         if($1 < 0) println("Trying to cut on index: " + $1)
         $self.map((cell => {
@@ -406,17 +405,16 @@ trait OptiWranglerDSL extends Base {
           else cell.substring(0, $1) + cell.substring($1 + 1)
         }), $2)
       }
+
       infix ("cut") ((MString, MAny) :: Table) implements composite ${
         $self.map(_.replaceFirst($1, ""), $2)
       }
-*/
 
       infix ("cut") (MString :: Table) implements composite ${
         $self.map(_.replaceFirst($1, ""), array_range(0, width($self)))
       }
 
-/*
-      infix ("cut") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("cutF") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.map((cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
@@ -424,7 +422,6 @@ trait OptiWranglerDSL extends Base {
           else cell.substring(0, index) + cell.substring(index+result.size)
         }), $2)
       }
-*/
 
       infix ("cutRight") ((MString, MAny) :: Table) implements composite ${
         $self.map((cell => {
@@ -434,27 +431,23 @@ trait OptiWranglerDSL extends Base {
         }), $2)
       }
 
-/*
       infix ("cutAll") ((MString, MAny) :: Table) implements composite ${
         $self.map(_.replaceAllLiterally($1, ""), $2)
       }
-*/
 
       infix ("cutAll") (MString :: Table) implements composite ${
         $self.map(_.replaceAllLiterally($1, ""), array_range(0, width($self)))
       }
 
-/*
       infix ("cutAll") (MInt :: Table) implements composite ${
         $self.map((cell => {
           if ($1 ge cell.size) cell
           else cell.substring(0, $1) + cell.substring($1 + 1)
         }), array_range(0, width($self)))
       }
-*/
 
       // SPLIT
-/*      
+
       infix ("split") ((MInt, MAny) :: Table) implements composite ${
         if($1 < 0) println("Trying to split on index: " + $1)
         $self.flatMap((cell => {
@@ -470,8 +463,8 @@ trait OptiWranglerDSL extends Base {
           else array(cell.substring(0, index), cell.substring(index+$1.size))
         }), $2)
       }
-*/
-      infix ("split") ((MString ==> MString, MAny) :: Table) implements composite ${
+
+      infix ("splitF") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.flatMap((cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
@@ -493,7 +486,7 @@ trait OptiWranglerDSL extends Base {
       }
 
       // EXTRACT
-/*
+
       infix ("extract") ((MInt, MAny) :: Table) implements composite ${
         if($1 < 0) println("Trying to extract on index: " + $1)
         $self.flatMap(cell => {
@@ -509,7 +502,7 @@ trait OptiWranglerDSL extends Base {
         }, $2)
       }
 
-      infix ("extract") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("extractF") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.flatMap(cell => {
           val result = $1(cell)
           if(cell.indexOf(result) eq -1) array(cell, "")
@@ -517,7 +510,7 @@ trait OptiWranglerDSL extends Base {
           array(cell, cell)
         }, $2)
       }
-*/
+
       // EDIT : just wraps map at the moment 
       infix ("edit") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.map($1, $2)
@@ -530,14 +523,13 @@ trait OptiWranglerDSL extends Base {
         $self
       }
 */
-/*
+
       infix ("delete") ((MString, MAny) :: Table) implements composite ${
-        $self.delete({x ==> regexMatch($1, x)}, $2)
+        $self.deleteF({x => regexMatch($1, x)}, $2)
       }
-*/
 
       // (wrap to filter) todododododotodo
-      infix ("delete") ((MString ==> MBoolean, MAny) :: Table) implements composite ${
+      infix ("deleteF") ((MString ==> MBoolean, MAny) :: Table) implements composite ${
         $self.filter($1, $2)
         $self
       }
@@ -571,6 +563,26 @@ trait OptiWranglerDSL extends Base {
       // FOLD
 
       // UNFOLD
+
+      // WRAP
+    
+      infix ("wrapShort") (MInt :: Table) implements composite ${
+        set_data($self, 
+          table.map{col => col.grouped(wrap).toArray}.map(x=>x.transpose).flatMap(x => x)
+        )
+        $self
+      }
+/*
+      def wrapLong(wrap: Int) = {
+        val grouper = sc.parallelize(for (i <- 0 until table.count().toInt) yield i / wrap).coalesce(table.partitions.size)
+        copy(table.zip(grouper).groupBy(_._2).map(_._2.map(_._1)).flatMap(x=>x))
+      }
+*/
+
+      infix ("wrap") (MInt, :: Table) implements composite ${
+        if($1 < width($self)) $self.wrapShort($1)
+        else $self.wrapLong($1)
+      }
 
       // IO - could be better
       infix ("tableFromFile") (MString :: Table) implements composite ${ 
