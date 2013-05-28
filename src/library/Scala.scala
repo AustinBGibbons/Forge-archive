@@ -42,6 +42,7 @@ trait ScalaOps {
     
     // why do these conflict with Delite Boolean ops and not the others in Prim?
     // the reason seems to be because of the combination of overloaded parameters that already exist in the LMS versions of the other ops. (i.e., we got lucky)
+    direct (Prim) ( "not", Nil, MBoolean :: MBoolean) implements codegen ($cala, ${!$0})
     infix (Prim) ("unary_!", Nil, MBoolean :: MBoolean) implements codegen($cala, "!" + quotedArg(0))
     infix (Prim) ("||", Nil, (MBoolean, MBoolean) :: MBoolean) implements codegen($cala, quotedArg(0) + " || " + quotedArg(1))
     infix (Prim) ("&&", Nil, (MBoolean, MBoolean) :: MBoolean) implements codegen($cala, quotedArg(0) + " && " + quotedArg(1))
@@ -278,6 +279,19 @@ trait ScalaOps {
     
     impl (lt) (codegen($cala, quotedArg(0) + " < " + quotedArg(1)))    
     impl (gt) (codegen($cala, quotedArg(0) + " > " + quotedArg(1)))
+
+    val le = infix (Ord) ("le", List(A withBound TOrdering), List(A,A) :: MBoolean)
+    val ge = infix (Ord) ("ge", List(A withBound TOrdering), List(A,A) :: MBoolean)
+
+    impl (le) (codegen($cala, quotedArg(0) + " <= " + quotedArg(1)))
+    impl (ge) (codegen($cala, quotedArg(0) + " >= " + quotedArg(1)))
+
+    val eq = infix (Ord) ("eq", List(A withBound TOrdering), List(A,A) :: MBoolean)
+    val ne = infix (Ord) ("neq", List(A withBound TOrdering), List(A,A) :: MBoolean)
+
+    impl (eq) (codegen($cala, quotedArg(0) + " == " + quotedArg(1)))
+    impl (ne) (codegen($cala, quotedArg(0) + " != " + quotedArg(1)))
+
   }
   
   def importStrings() = {
@@ -288,7 +302,32 @@ trait ScalaOps {
     val T = tpePar("T") 
 
     // most of these variants collapse to a common back-end implementation:
-    
+    val xcharAt = infix (Str) ("xcharAt", List(), List(MString, MInt) :: MString)
+    impl (xcharAt) (codegen($cala, quotedArg(0)+"("+quotedArg(1)+").toString"))
+
+    val xsplit = infix (Str) ("xsplit", List(), List(MString, MString) :: MArray(MString))
+    impl (xsplit) (codegen($cala, quotedArg(0)+".split("+quotedArg(1)+")"))
+
+    val replaceFirst = infix (Str) ("replaceFirst", List(), List(MString, MString, MString) :: MString)
+    impl (replaceFirst) (codegen($cala, quotedArg(0)+".replaceFirst("+quotedArg(1)+", "+quotedArg(2)+")"))
+
+    val replaceAllLiterally = infix (Str) ("replaceAllLiterally", List(), List(MString, MString, MString) :: MString)
+    impl (replaceAllLiterally) (codegen($cala, quotedArg(0)+".replaceAllLiterally("+quotedArg(1)+", "+quotedArg(2)+")"))
+
+    val indexOf = infix (Str) ("indexOf", List(), List(MString, MString) :: MInt)
+    impl (indexOf) (codegen($cala, quotedArg(0)+".indexOf("+quotedArg(1)+")"))
+
+    val lastIndexOf = infix (Str) ("lastIndexOf", List(), List(MString, MString) :: MInt)
+    impl (lastIndexOf) (codegen($cala, quotedArg(0)+".lastIndexOf("+quotedArg(1)+")"))
+
+    val size = infix (Str) ("size", List(), List(MString) :: MInt)
+    impl (size) (codegen($cala, quotedArg(0)+".size"))
+
+    val substring1 = infix (Str) ("substring", List(), List(MString, MInt, MInt) :: MString)
+    impl (substring1) (codegen($cala, quotedArg(0)+".substring("+quotedArg(1)+", "+quotedArg(2)+")"))
+    val substring2 = infix (Str) ("substring", List(), List(MString, MInt) :: MString)
+    impl (substring2) (codegen($cala, quotedArg(0)+".substring("+quotedArg(1)+")"))    
+
     // maps to Rep[String], Rep[Any]
     val concat = infix (Str) ("+", List(T), List(CString, T) :: MString)
     val concat2 = infix (Str) ("+", List(T), List(MString, T) :: MString)

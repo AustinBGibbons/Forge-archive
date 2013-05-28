@@ -8,7 +8,7 @@ object HelloWranglerInterpreter extends OptiWranglerApplicationInterpreter with 
 trait HelloWrangler extends OptiWranglerApplication { 
   def main() = {
     println("hello world")    
-    println(args(0))
+    //println(args(0))
     //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
     val col = Table(0, "").tableFromFile(args(0))
 
