@@ -5,7 +5,7 @@ import core.{ForgeApplication,ForgeApplicationRunner}
 
 object OptiWranglerDSLRunner extends ForgeApplicationRunner with OptiWranglerDSL
 
-trait Base extends ForgeApplication with ScalaOps {
+trait Base extends ForgeApplication {
   def addErrorChecking() {
     val Error = grp("Error")
     
@@ -42,7 +42,7 @@ trait Base extends ForgeApplication with ScalaOps {
   }
 }
 
-trait OptiWranglerDSL extends ForgeApplication /*with ScalaOps*/ with Base {
+trait OptiWranglerDSL extends Base {
   /**
    * The name of your DSL. This the name that will be used in generated files,
    * package declarations, etc.
@@ -56,7 +56,7 @@ trait OptiWranglerDSL extends ForgeApplication /*with ScalaOps*/ with Base {
     /**
      * Include Scala ops
      */
-    addScalaOps() 
+    importScalaOps() 
     
     addErrorChecking()
 
@@ -82,8 +82,8 @@ trait OptiWranglerDSL extends ForgeApplication /*with ScalaOps*/ with Base {
     data(Table, ("_data", SSArray), ("_width", MInt), ("_header", MSI), ("_name", MString))
     // allocation
 
-    static (Table) ("apply", Nil, (MInt) :: Table, effect = mutable) implements allocates (Table, 
-      ${array_empty[ForgeArray[String]]($0)}, ${$0}, ${map_empty[String, Int]()}, ${unit("bubblegum")}
+    static (Table) ("apply", Nil, (Table, MInt) :: Table, effect = mutable) implements allocates (Table, 
+      ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${map_empty[String, Int]()}, ${unit("bubblegum")}
     )
 
     static (Table) ("apply", Nil, (SSArray, MInt, MSI, MString) :: Table, effect = mutable) implements allocates(Table, ${$0}, ${$1}, ${$2}, ${$3})
@@ -174,7 +174,13 @@ trait OptiWranglerDSL extends ForgeApplication /*with ScalaOps*/ with Base {
       
       // data ops             
       infix ("apply") ((MInt, MInt) :: MString) implements composite ${ array_apply(array_apply(data($self), $1), $2) }                        
-      infix ("apply") ((MInt) :: SArray) implements composite ${ array_apply(data($self), $1) }                        
+      infix ("apply") ((MInt) :: SArray) implements composite ${ array_apply(data($self), $1) }
+ 
+/*
+      infix ("apply") ((MInt) :: Table, effect = mutable) implements allocates (Table, 
+        ${array_empty[ForgeArray[String]]($0)}, ${$0}, ${map_empty[String, Int]()}, ${unit("bubblegum")})
+*/
+
       // example named arg
       infix ("update") ((("i",MInt),("e",SArray)) :: MUnit, effect = write(0)) implements composite ${
         array_update(data($self), $i, $e)
@@ -218,9 +224,9 @@ trait OptiWranglerDSL extends ForgeApplication /*with ScalaOps*/ with Base {
 
       parallelize as ParallelCollection(SArray,
        lookupOverloaded("apply",4),
-       lookup("length"),
+       lookupOp("length"),
        lookupOverloaded("apply",0),
-       lookup("update")
+       lookupOp("update")
       )
 /*
       parallelize as ParallelCollectionBuffer(SArray,
