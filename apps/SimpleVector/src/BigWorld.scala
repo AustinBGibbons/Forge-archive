@@ -9,8 +9,10 @@ trait BigWorld extends SimpleVectorApplication {
   def main() = {
     println("hello world")    
 
-    val v1 = Vector[Int](10)
-    val v2 = Vector[Int](10)
+    val size = 1 << 22
+  
+    val v1 = Vector[Int](size)
+    val v2 = Vector[Int](size)
  
     // defs
     var i = 0
@@ -42,5 +44,4 @@ trait BigWorld extends SimpleVectorApplication {
     println("v6 = v1.filter(_ < 5)")
     val v6 = v1.filter(_ < 5)
   }
-   
 }

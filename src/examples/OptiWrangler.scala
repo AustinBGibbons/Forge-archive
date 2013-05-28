@@ -139,7 +139,7 @@ trait OptiWranglerDSL extends Base {
     direct (Table) ("toFile", Nil, (MString, MString, SSArray, MSI) :: MUnit, effect = simple) implements codegen ($cala, ${
       val of = new java.io.PrintStream(new java.io.FileOutputStream($0 + $1))
       //of.println($2.map(x => x.mkString(",")).mkString("\\n"))
-      of.println($2.map(x => x.mkString(",")).mkString("\\n"))
+      of.println($2.map(x => x.mkString(",")).mkString("#"))
       of.close()
     })
 
