@@ -12,14 +12,14 @@ import ppl.delite.framework.ops.DeliteOpsExp
 trait ForgeProfileOpsExp extends EffectExp /*with DeliteILOps*/ {
   this: DeliteILOps => 
 
-  def _tic(deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit]
-    = tic()//deps) 
-  def _tic(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit]
-    = tic()//component, deps)
-  def _toc(deps: Rep[Any]*)(implicit ctx: SourceContext) 
-    = toc()//deps)
-  def _toc(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext) 
-    = toc()//component, deps)
+  def start(deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit]
+    = tic(deps: _*) 
+  def start(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit]
+    = tic(component, deps: _*)
+  def stop(deps: Rep[Any]*)(implicit ctx: SourceContext) 
+    = toc(deps: _*)
+  def stop(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext) 
+    = toc(component, deps: _*)
   def _profile_start(component: Rep[String], deps: Seq[Rep[Any]])(implicit ctx: SourceContext): Rep[Unit]
     = profile_start(component, deps)
   def _profile_stop(component: Rep[String], deps: Seq[Rep[Any]])(implicit ctx: SourceContext): Rep[Unit]

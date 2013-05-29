@@ -8,10 +8,10 @@ import scala.virtualization.lms.common._
 trait LiftForgeProfiles
 trait ForgeProfileOps extends Base
 trait ForgeProfileCompilerOps extends ForgeProfileOps {    
-  def _tic(deps: Rep[Any]*)(implicit ctx: SourceContext) //= tic(deps)
-  def _tic(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext) //= tic(component)
-  def _toc(deps: Rep[Any]*)(implicit ctx: SourceContext) //= toc(deps)
-  def _toc(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext) //= 
+  def start(deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit] //= tic(deps)
+  def start(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit] //= tic(component)
+  def stop(deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit] //= toc(deps)
+  def stop(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit] //= 
   def _profile_start(component: Rep[String], deps: Seq[Rep[Any]])(implicit ctx: SourceContext): Rep[Unit]
   def _profile_stop(component: Rep[String], deps: Seq[Rep[Any]])(implicit ctx: SourceContext): Rep[Unit]
 }

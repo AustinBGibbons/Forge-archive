@@ -23,6 +23,7 @@ trait BigWorld extends SimpleVectorApplication {
     }
    
     // zip
+    tic()
     val v3 = v1+v2
     println("v3 = v1+v2")
 
@@ -39,9 +40,10 @@ trait BigWorld extends SimpleVectorApplication {
     val vc = v1.map(e => e+2)
     val vc2 = vc.mapreduce(e => e-1, (a,b) => a+b)
     println("vc2: " + vc2)
-    
+
     // filter
     println("v6 = v1.filter(_ < 5)")
     val v6 = v1.filter(_ < 5)
+    toc(v6)
   }
 }

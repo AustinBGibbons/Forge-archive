@@ -77,6 +77,7 @@ trait ForgeExp extends Forge with ForgeUtilities with ForgeScalaOpsPkgExp with D
     case Def(Tpe(_,_,`now`)) => true // is there any reason to ever generate an abstract type for a 'now' type?
     case Def(Tpe("ForgeArray",_,_)) | Def(Tpe("Var",_,_)) | Def(Tpe("Overloaded",_,_)) => true
     case Def(Tpe("SmallMap",_,_)) => true // gibbons4
+    // Profiling
     case _ => false
   }
   

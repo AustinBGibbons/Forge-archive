@@ -14,6 +14,7 @@ trait ScalaOps {
   this: ForgeApplication =>
   
   def importScalaOps() = {
+   // importProfiling()
     importProxies()
     importPrimitives()
     importMisc()
@@ -32,6 +33,13 @@ trait ScalaOps {
    */
   def importProxies() = {
     // proxy(scala.collection.immutable.Array)      
+  }
+
+  def importProfiling() = {
+    val Prof = grp("Profiling")
+    
+    direct (Prof) ("tic", Nil, MUnit :: MUnit, effect = simple) implements composite ${_tic()}
+    direct (Prof) ("toc", Nil, varArgs(MAny) :: MUnit, effect = simple) implements composite ${_toc($1)}
   }
   
   def importPrimitives() = {

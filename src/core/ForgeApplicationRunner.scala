@@ -19,6 +19,7 @@ trait ForgeApplicationRunner extends ForgeApplication with ForgeExp {
     info("DSL Being Staged:[" + this.getClass.getName + "] (" + dsl + ")")
 
     // -- stage forge primitives
+    extern(grp("ForgeProfile"))
     extern(grp("SmallMap"))
     extern(grp("ForgeArray"))
     extern(grp("Var"), withLift = true)    
