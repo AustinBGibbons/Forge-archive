@@ -21,7 +21,7 @@ trait HelloWrangler extends OptiWranglerApplication {
     println("Cut : " + ((System.nanoTime - now2) / 1e6))
     
     val now3 = System.nanoTime
-    x.tableToFile("/afs/cs.stanford.edu/u/gibbons4/data/")
+    x.tableToFile("/home/gibbons4/data/")
     println("Written to file : " + ((System.nanoTime - now3) / 1e6))
 
     println("just kidding none of that is blocking.")

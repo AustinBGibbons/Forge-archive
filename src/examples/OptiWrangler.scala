@@ -82,6 +82,20 @@ trait OptiWranglerDSL extends Base {
     data(Table, ("_data", SSArray), ("_width", MInt), ("_header", MSI), ("_name", MString))
     // allocation
 
+    /*
+    static (Table) ("apply", Nil, MInt :: Table, effect = mutable) implements allocates (Table, 
+      ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${map_empty[String, Int]()}, ${unit("bubblegum")}
+    )
+    */
+
+    direct (Table) ("map_body", Nil, (MArray(MString), MArray(MInt), MArray(MInt), MString ==> MString, (MArray(MInt), MInt) ==> MBoolean) :: MArray(MString)) implements codegen ($cala, ${
+      $0.zip($1).map{case(cell, index) =>
+        //if($4($2, index)) $3(cell)
+        //else cell
+        cell
+      }
+    })
+
     static (Table) ("apply", Nil, (Table, MInt) :: Table, effect = mutable) implements allocates (Table, 
       ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${map_empty[String, Int]()}, ${unit("bubblegum")}
     )
@@ -93,7 +107,7 @@ trait OptiWranglerDSL extends Base {
 
     direct (Table) ("parseFileName", Nil, MString :: MString) implements codegen ($cala, ${
       val fileName = $0
-      val forge_extension = ".forge"
+      val forge_extension = "forge"
       val dirName = if(fileName.contains("/")) {
         fileName.substring(0, fileName.lastIndexOf("/") + 1)
       } else { "./" }
@@ -223,11 +237,12 @@ trait OptiWranglerDSL extends Base {
       }
 
       parallelize as ParallelCollection(SArray,
-       lookupOverloaded("apply",4),
-       lookupOp("length"),
        lookupOverloaded("apply",0),
+       lookupOp("length"),
+       lookupOverloaded("apply",4),
        lookupOp("update")
       )
+
 /*
       parallelize as ParallelCollectionBuffer(SArray,
        lookupOverloaded("apply",4),
@@ -240,6 +255,7 @@ trait OptiWranglerDSL extends Base {
        lookup("copy")
       )            
 */
+
       /* 
       * OptiWrangler Ops 
       * We are not using the things up there 
@@ -361,10 +377,13 @@ trait OptiWranglerDSL extends Base {
       }
 
       infix ("map_mapper") ((MArray(MInt), MArray(MInt), MString ==> MString, (MArray(MInt), MInt) ==> MBoolean) :: Table) implements map((SArray, SArray), 0, ${ row =>
+        /*
         array_zipwith[String, Int, String](row, $1, (cell, index) =>
           if($4($2, index)) $3(cell)
           else cell
         )
+        */
+        map_body(row, $1, $2, $3, $4)
       })
   
       infix ("map") ((MString ==> MString, MAny) :: Table) implements composite ${
@@ -414,7 +433,7 @@ trait OptiWranglerDSL extends Base {
         $self.map(_.replaceFirst($1, ""), array_range(0, width($self)))
       }
 
-      infix ("cutF") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("cut") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.map((cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
@@ -464,7 +483,7 @@ trait OptiWranglerDSL extends Base {
         }), $2)
       }
 
-      infix ("splitF") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("split") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.flatMap((cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
@@ -502,7 +521,7 @@ trait OptiWranglerDSL extends Base {
         }, $2)
       }
 
-      infix ("extractF") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("extract") ((MString ==> MString, MAny) :: Table) implements composite ${
         $self.flatMap(cell => {
           val result = $1(cell)
           if(cell.indexOf(result) eq -1) array(cell, "")
@@ -523,13 +542,14 @@ trait OptiWranglerDSL extends Base {
         $self
       }
 */
-
+/*
       infix ("delete") ((MString, MAny) :: Table) implements composite ${
-        $self.deleteF({x => regexMatch($1, x)}, $2)
+        $self.delete({x => regexMatch($1, x)}, $2)
       }
+*/
 
       // (wrap to filter) todododododotodo
-      infix ("deleteF") ((MString ==> MBoolean, MAny) :: Table) implements composite ${
+      infix ("delete") ((MString ==> MBoolean, MAny) :: Table) implements composite ${
         $self.filter($1, $2)
         $self
       }
@@ -566,23 +586,23 @@ trait OptiWranglerDSL extends Base {
 
       // WRAP
     
+/*
       infix ("wrapShort") (MInt :: Table) implements composite ${
         set_data($self, 
           table.map{col => col.grouped(wrap).toArray}.map(x=>x.transpose).flatMap(x => x)
         )
         $self
       }
-/*
       def wrapLong(wrap: Int) = {
         val grouper = sc.parallelize(for (i <- 0 until table.count().toInt) yield i / wrap).coalesce(table.partitions.size)
         copy(table.zip(grouper).groupBy(_._2).map(_._2.map(_._1)).flatMap(x=>x))
       }
-*/
 
       infix ("wrap") (MInt, :: Table) implements composite ${
         if($1 < width($self)) $self.wrapShort($1)
         else $self.wrapLong($1)
       }
+*/
 
       // IO - could be better
       infix ("tableFromFile") (MString :: Table) implements composite ${ 

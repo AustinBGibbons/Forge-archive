@@ -275,10 +275,14 @@ trait ScalaOps {
     direct (Ord) ("__equal", (AC,B), (AC,B) :: MBoolean) implements (codegen($cala, quotedArg(0) + " == " + quotedArg(1)))
     
     val lt = infix (Ord) ("<", List(A withBound TOrdering), List(A,A) :: MBoolean)    
+    val lte = infix (Ord) ("<=", List(A withBound TOrdering), List(A,A) :: MBoolean)    
     val gt = infix (Ord) (">", List(A withBound TOrdering), List(A,A) :: MBoolean)    
+    val gte = infix (Ord) (">=", List(A withBound TOrdering), List(A,A) :: MBoolean)    
     
     impl (lt) (codegen($cala, quotedArg(0) + " < " + quotedArg(1)))    
+    impl (lte) (codegen($cala, quotedArg(0) + " <= " + quotedArg(1)))    
     impl (gt) (codegen($cala, quotedArg(0) + " > " + quotedArg(1)))
+    impl (gte) (codegen($cala, quotedArg(0) + " >= " + quotedArg(1)))
 
     val le = infix (Ord) ("le", List(A withBound TOrdering), List(A,A) :: MBoolean)
     val ge = infix (Ord) ("ge", List(A withBound TOrdering), List(A,A) :: MBoolean)
@@ -291,7 +295,6 @@ trait ScalaOps {
 
     impl (eq) (codegen($cala, quotedArg(0) + " == " + quotedArg(1)))
     impl (ne) (codegen($cala, quotedArg(0) + " != " + quotedArg(1)))
-
   }
   
   def importStrings() = {
