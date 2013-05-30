@@ -25,3 +25,7 @@ trait ForgeProfileOpsExp extends EffectExp /*with DeliteILOps*/ {
   def _profile_stop(component: Rep[String], deps: Seq[Rep[Any]])(implicit ctx: SourceContext): Rep[Unit]
     = profile_stop(component, deps)
 }
+trait ScalaGenForgeProfileOps //extends ScalaGenVariables with DeliteScalaGenVariables { val IR: VariablesExp with DeliteOpsExp }
+trait CudaGenForgeProfileOps //extends CudaGenVariables
+trait OpenCLGenForgeProfileOps //extends OpenCLGenVariables
+trait CGenForgeProfileOps //extends CGenVariables

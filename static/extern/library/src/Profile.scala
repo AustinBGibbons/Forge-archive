@@ -6,7 +6,9 @@ import scala.virtualization.lms.common._
 
 // Front-end
 trait ForgeProfileWrapper extends HUMAN_DSL_NAMEBase {
-  var start = 0L
+  //class Profile() {
+    var start = 0L // System.currentTimeMillis()
+  //}
   def start(deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit] 
     = _profile_start(unit("app"),deps)
   def start(component: Rep[String], deps: Rep[Any]*)(implicit ctx: SourceContext): Rep[Unit] 

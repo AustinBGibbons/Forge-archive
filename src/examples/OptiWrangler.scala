@@ -90,9 +90,9 @@ trait OptiWranglerDSL extends Base {
 
     direct (Table) ("map_body", Nil, (MArray(MString), MArray(MInt), MArray(MInt), MString ==> MString, (MArray(MInt), MInt) ==> MBoolean) :: MArray(MString)) implements codegen ($cala, ${
       $0.zip($1).map{case(cell, index) =>
-        //if($4($2, index)) $3(cell)
-        //else cell
-        cell
+        if($b[4]($2, index)) $b[3](cell)
+        else cell
+        //cell
       }
     })
 
