@@ -30,6 +30,7 @@ trait SmallMapOpsExp extends EffectExp {
   def map_put[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K], value: Rep[V])(implicit __imp0: SourceContext): Rep[Unit]
     = reflectWrite(m)(MapPut[K,V](m, key, value))
   def map_remove[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K])(implicit __imp0: SourceContext): Rep[Any] /*V*/ 
+    = reflectWrite(m)(MapRemove[K,V](m, key))
   def map_getOrElse[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K], default: /*=>*/ Rep[V])(implicit __imp0: SourceContext): Rep[Any] /*V*/ 
     = MapGetOrElse[K,V](m, key, default) 
   def map_contains[K:Manifest, V:Manifest](m: Rep[SmallMap[K,V]], key: Rep[K])(implicit __imp0: SourceContext): Rep[Boolean] /*V*/ 
