@@ -16,29 +16,30 @@ trait MapTestDSL extends ForgeApplication {
   }
     
   def importMapTestOps() {
-    val MultiSet = tpe("MultiSet")
+    val T = tpePar("T")
+    val MultiSet = tpe("MultiSet", T)
 
-    val MFI = tpeInst(MMap, List(MFloat, MInt))
+    val MTI = tpeInst(MMap, List(T, MInt))
 
-    data(MultiSet, ("_map", MFI))
+    data(MultiSet, ("_map", MTI))
 
-    static (MultiSet) ("apply", Nil, Nil :: MultiSet, effect = mutable) implements allocates (MultiSet, ${
-      map_empty[Float, Int]()
+    static (MultiSet) ("apply", T, Nil :: MultiSet(T), effect = mutable) implements allocates (MultiSet, ${
+      map_empty[T, Int]()
     })
 
     val MultiSetOps = withTpe (MultiSet)
     MultiSetOps {
-      compiler ("getMap") (Nil :: MFI) implements getter (0, "_map")
-      compiler ("setMap") (MFI :: MUnit, effect=write(0)) implements setter(0, "_map", ${$1})
+      compiler ("getMap") (Nil :: MTI) implements getter (0, "_map")
+      compiler ("setMap") (MTI :: MUnit, effect=write(0)) implements setter(0, "_map", ${$1})
   
-      infix ("getOrElseWrapper") ((MFI, MFloat) :: MInt) implements composite ${
+      infix ("getOrElseWrapper") ((MTI, T) :: MInt) implements composite ${
         map_getOrElse($1, $2, 0) match {
           case x: Int => x
           case x: Rep[Int] => x
         }
       }
 
-      infix ("ms_add") (MFloat :: MUnit, effect=write(0)) implements composite ${
+      infix ("ms_add") (T :: MUnit, effect=write(0)) implements composite ${
         val m = getMap($self)
         //map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
         val new_value = $self.getOrElseWrapper(m, $1) + 1
@@ -46,7 +47,7 @@ trait MapTestDSL extends ForgeApplication {
         setMap($self, m)
       }
 
-      infix ("ms_remove") (MFloat :: MInt, effect=write(0)) implements composite ${
+      infix ("ms_remove") (T :: MInt, effect=write(0)) implements composite ${
         val m = getMap($self)
         val curr = $self.ms_count($1)
         if(curr == 1) {
@@ -67,11 +68,11 @@ trait MapTestDSL extends ForgeApplication {
         }
       }
 
-      infix ("ms_contains") (MFloat :: MBoolean) implements composite ${
+      infix ("ms_contains") (T :: MBoolean) implements composite ${
         map_contains(getMap($self), $1)
       }
 
-      infix ("ms_count") (MFloat :: MInt) implements composite ${
+      infix ("ms_count") (T :: MInt) implements composite ${
         map_getOrElse(getMap($self), $1, 0) match {
           case x: Int => x
           case x: Rep[Int] => x

@@ -11,7 +11,7 @@ object HelloWorldInterpreter extends MapTestApplicationInterpreter with HelloWor
 trait HelloWorld extends MapTestApplication { 
   def main() = {
     println("Hello, World!")
-    val ms = MultiSet()
+    val ms = MultiSet[Float]()
   
     ms.ms_add(1.0f)
     ms.ms_add(1.0f)
