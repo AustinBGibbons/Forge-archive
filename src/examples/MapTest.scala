@@ -40,7 +40,9 @@ trait MapTestDSL extends ForgeApplication {
 
       infix ("ms_add") (MFloat :: MUnit, effect=write(0)) implements composite ${
         val m = getMap($self)
-        map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
+        //map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
+        val new_value = $self.getOrElseWrapper(m, $1) + 1
+        map_put(m, $1, new_value)
         setMap($self, m)
       }
 
@@ -56,9 +58,12 @@ trait MapTestDSL extends ForgeApplication {
           0
         }
         else {
-          map_put(m, $1, forge_int_minus(curr, 1))
+          //map_put(m, $1, forge_int_minus(curr, 1))
+          val new_value = curr - 1
+          map_put(m, $1, new_value)
           setMap($self, m)
-          forge_int_minus(curr, 1)
+          //forge_int_minus(curr, 1)
+          new_value
         }
       }
 
