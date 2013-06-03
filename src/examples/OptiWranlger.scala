@@ -61,7 +61,7 @@ trait OptiWranglerDSL extends Base {
       compiler ("set_name") (MString :: MUnit, effect=write(0)) implements setter(0, "_name", quotedArg(1))
 
       // parallelization - trying this style
-      infix ("apply") (MInt :: Table, effect=mutable) implements allocates (Table, 
+      infix ("new_table") (MInt :: Table, effect=mutable) implements allocates (Table, 
         ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${array_length(array_apply(data($0), unit(0)))}, 
           ${map_empty[String, Int]()}, ${name($0)}
       )
@@ -70,7 +70,7 @@ trait OptiWranglerDSL extends Base {
       infix ("update") ((MInt, SArray) :: MUnit, effect=write(0)) implements
         composite ${ array_update(data($self), $1, $2) } 
 
-      parallelize as ParallelCollection(SArray, lookupOverloaded("apply", 0), lookupOp("length"), lookupOverloaded("apply", 1), lookupOp("update"))
+      parallelize as ParallelCollection(SArray, lookupOp("new_table"), lookupOp("length"), lookupOverloaded("apply", 0), lookupOp("update"))
 
       // More bones
       infix ("apply") ((MInt, MInt) :: MString) implements composite ${
@@ -114,8 +114,17 @@ trait OptiWranglerDSL extends Base {
       }
 
       // Meat
+      infix ("cut") (MString :: Table) implements composite ${
+        $self.map(_.replaceFirst($1, ""), array_range(0, width($self)))
+      }
+
       infix ("cut") ((MString, MAny) :: Table) implements composite ${
         $self.map(_.replaceFirst($1, ""), $2)
+      }
+
+      // IO - user
+      infix ("toFile") (MString :: MUnit, effect = simple) implements composite ${
+        toFile($1, name($self), data($self), header($self))
       }
     }
 

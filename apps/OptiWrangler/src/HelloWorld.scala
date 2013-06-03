@@ -10,9 +10,16 @@ trait HelloWrangler extends OptiWranglerApplication {
     println("hello world")    
     //println(args(0))
     //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
-    val now = clock()
+    var now = clock()
     val table = Table(args(0))
     println("Loaded from file : " + ((clock() - now) / 1e3.toDouble))
+
+    now = clock()
+    val t2 = table.cut("1")
+    println("Cut 1 : " + ((clock() - now) / 1e3.toDouble))
+
+    t2.toFile("/home/gibbons4/data/")
+
   /*
     val col = Table(0, "").tableFromFile(args(0))
     println("Loaded from file : " + ((clock() - now) / 1e3.toDouble))
