@@ -43,6 +43,7 @@ trait Definitions extends DerivativeTypes {
   lazy val MVar = tpe("Var", tpePar("A"))
   lazy val MArray = tpe("ForgeArray", tpePar("A"))
   lazy val MArrayBuffer = tpe("ForgeArrayBuffer", tpePar("A"))
+  lazy val MMap = tpe("SmallMap", List(tpePar("A"), tpePar("B")))
   
   /**
    * DSLType placeholders
