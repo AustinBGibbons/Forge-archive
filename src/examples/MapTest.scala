@@ -38,16 +38,18 @@ trait MapTestDSL extends ForgeApplication {
         }
       }
 
-      infix ("add") (MFloat :: MUnit, effect=write(0)) implements composite ${
+      infix ("ms_add") (MFloat :: MUnit, effect=write(0)) implements composite ${
         val m = getMap($self)
         map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
+        setMap($self, m)
       }
 
-      infix ("remove") (MFloat :: MInt, effect=write(0)) implements composite ${
+      infix ("ms_remove") (MFloat :: MInt, effect=write(0)) implements composite ${
         val m = getMap($self)
-        val curr = $self.count($1)
+        val curr = $self.ms_count($1)
         if(curr == 1) {
           map_remove(m, $1)
+          setMap($self, m)
           0
         }
         else if (curr == 0) {
@@ -55,15 +57,16 @@ trait MapTestDSL extends ForgeApplication {
         }
         else {
           map_put(m, $1, forge_int_minus(curr, 1))
+          setMap($self, m)
           forge_int_minus(curr, 1)
         }
       }
 
-      infix ("contains") (MFloat :: MBoolean) implements composite ${
+      infix ("ms_contains") (MFloat :: MBoolean) implements composite ${
         map_contains(getMap($self), $1)
       }
 
-      infix ("count") (MFloat :: MInt) implements composite ${
+      infix ("ms_count") (MFloat :: MInt) implements composite ${
         map_getOrElse(getMap($self), $1, 0) match {
           case x: Int => x
           case x: Rep[Int] => x
@@ -73,5 +76,4 @@ trait MapTestDSL extends ForgeApplication {
 
     ()
   }
-}
- 
+} 
