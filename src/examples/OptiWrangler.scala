@@ -87,7 +87,7 @@ trait OptiWranglerDSL extends Base {
       ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${map_empty[String, Int]()}, ${unit("bubblegum")}
     )
     */
-
+/*
     direct (Table) ("map_body", Nil, (MArray(MString), MArray(MInt), MArray(MInt), MString ==> MString, (MArray(MInt), MInt) ==> MBoolean) :: MArray(MString)) implements codegen ($cala, ${
       $0.zip($1).map{case(cell, index) =>
         //if($4($2, index)) $3(cell)
@@ -95,7 +95,12 @@ trait OptiWranglerDSL extends Base {
         cell
       }
     })
-
+*/
+  
+    direct (Table) ("clock", Nil, MUnit :: MInt, effect = simple) implements codegen ($cala, ${
+      System.currentTimeMillis().toInt
+    })
+  
     static (Table) ("apply", Nil, (Table, MInt) :: Table, effect = mutable) implements allocates (Table, 
       ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${map_empty[String, Int]()}, ${unit("bubblegum")}
     )
@@ -376,29 +381,48 @@ trait OptiWranglerDSL extends Base {
         $self
       }
 
+      // it probably doesn't help that the zipped thing is passed as an argument.
+/*
       infix ("map_mapper") ((MArray(MInt), MArray(MInt), MString ==> MString, (MArray(MInt), MInt) ==> MBoolean) :: Table) implements map((SArray, SArray), 0, ${ row =>
-        /*
         array_zipwith[String, Int, String](row, $1, (cell, index) =>
           if($4($2, index)) $3(cell)
           else cell
         )
-        */
-        map_body(row, $1, $2, $3, $4)
+        //map_body(row, $1, $2, $3, $4)
       })
+*/
   
+      infix ("identity") (MUnit :: Table) implements composite ${
+        set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row =>
+          array_map[String, String](row, x => x)
+        ))
+      }
+
       infix ("map") ((MString ==> MString, MAny) :: Table) implements composite ${
         val _width = array_range(0, width($self)) 
         val indices = $self.getColumns($2)
-        $self.cleanup($self.map_mapper(_width, indices, $1, contains))
+        //$self.cleanup($self.map_mapper(_width, indices, $1, contains))
+        ///*
+        set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row => array_zipwith[String, Int, String](row, _width, (cell, index) =>
+          if(contains(indices, index)) $1(cell)
+          else cell
+        )))
+        //*/
+/*
+        set_data($self, array_map[ForgeArray[String], ForgeArray[String]](data($self), row => array_map[String, String](row, cell =>
+          $1(cell)
+        )))
+*/
+        $self
       }
-
+  
 /*
       infix ("map") ((SArray ==> SArray) :: Table) implements map((SArray, SArray), ${ e => $1(e) })
 
       infix ("reduce") (((SSArray, SSArray) ==> SSArray) :: SSArray) implements reduce((SSArray,Table), 0, array_empty[ForgeArray[String]](), ${
         (a,b) => $1(a,b)
       })
-      infix i"flatMap") ((SArray ==> SArray) :: Table) implements composite ${
+      infix ("flatMap") ((SArray ==> SArray) :: Table) implements composite ${
         $self.map($1).reduce(array_union[ForgeArray[String]])
       }
 
@@ -550,7 +574,7 @@ trait OptiWranglerDSL extends Base {
 
       // (wrap to filter) todododododotodo
       infix ("delete") ((MString ==> MBoolean, MAny) :: Table) implements composite ${
-        $self.filter($1, $2)
+        //$self.filter($1, $2)
         $self
       }
 

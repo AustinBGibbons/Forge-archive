@@ -10,19 +10,19 @@ trait HelloWrangler extends OptiWranglerApplication {
     println("hello world")    
     //println(args(0))
     //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
-    val now = System.nanoTime
+    val now = clock()
     val col = Table(0, "").tableFromFile(args(0))
-    println("Loaded from file : " + ((System.nanoTime - now) / 1e6))
+    println("Loaded from file : " + ((clock() - now) / 1e3.toDouble))
    // col(0) = Array("1")
     //col(2) = Array("3")
   
-    val now2 = System.nanoTime
+    val now2 = clock()
     val x = col.cutAll("\"").cut("1")
-    println("Cut : " + ((System.nanoTime - now2) / 1e6))
+    println("Cut : " + ((clock() - now2) / 1e3.toDouble))
     
-    val now3 = System.nanoTime
+    val now3 = clock()
     x.tableToFile("/home/gibbons4/data/")
-    println("Written to file : " + ((System.nanoTime - now3) / 1e6))
+    println("Written to file : " + ((clock() - now3) / 1e3.toDouble))
 
     println("just kidding none of that is blocking.")
 /*

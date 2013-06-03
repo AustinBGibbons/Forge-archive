@@ -3,14 +3,14 @@ package examples
 
 import core.{ForgeApplication,ForgeApplicationRunner}
 
-object SimpleVectorDSLRunner extends ForgeApplicationRunner with SimpleVectorDSL
+object SSOWDSLRunner extends ForgeApplicationRunner with SSOWDSL
 
-trait SimpleVectorDSL extends ForgeApplication {
+trait SSOWDSL extends ForgeApplication {
   /**
    * The name of your DSL. This is the name that will be used in generated files,
    * package declarations, etc.
    */
-  def dslName = "SimpleVector"
+  def dslName = "SSOW"
   
   /**
    * The specification is the DSL definition (types, data structures, ops)
@@ -42,16 +42,21 @@ trait SimpleVectorDSL extends ForgeApplication {
       System.currentTimeMillis().toInt
     })
  
+    direct (Vector) ("clock", Nil, MAny :: MInt, effect = simple) implements codegen ($cala, ${
+      System.currentTimeMillis().toInt
+    })
+ 
     // allocation
     static (Vector) ("apply", T, MInt :: Vector(T), effect = mutable) implements allocates(Vector, ${$0}, ${ array_empty[T]($0) })
     
     static (Vector) ("apply", T, (MInt, MArray(T)) :: Vector(T), effect = mutable) implements allocates(Vector, ${$0}, ${$1})
 
-    static (Vector) ("apply", Nil, MString :: Vector(MInt), effect = mutable) implements composite ${
+    static (Vector) ("apply", Nil, MString :: Vector(Vector(MString)), effect = mutable) implements composite ${
       val f = fromFile($0)
-      Vector[Int](array_length(f), f)
+      Vector[Vector[String]](array_length(f), array_map[ForgeArray[String], Vector[String]](f, x => Vector[String](array_length(x), x)))
     }
-    direct (Vector) ("fromFile", Nil, MString :: MArray(MInt)) implements codegen ($cala, ${scala.io.Source.fromFile($0).getLines.map(x => x.toInt).toArray})
+
+    direct (Vector) ("fromFile", Nil, MString :: MArray(MArray(MString))) implements codegen ($cala, ${scala.io.Source.fromFile($0).getLines.map(x => x.split(",")).toArray})
 
     // doesn't rewrite correctly if we use "withTpe (Vector) {", but works if we use:
     val VectorOps = withTpe (Vector)
@@ -91,6 +96,14 @@ trait SimpleVectorDSL extends ForgeApplication {
         $self.insert($self.length, $2)
       }        
       
+      infix ("drop") (MInt :: Vector(T), effect = write(0)) implements single ${
+        val data = vector_raw_data($self)
+        val size = $self.length - ($1 + 1)
+        array_copy(data, $1, data, $1+1, size)
+        vector_set_length($self, $self.length-1)  
+        $self
+      }
+
       compiler ("vector_insertspace") ((("pos",MInt),("len",MInt)) :: MUnit, effect = write(0)) implements single ${
         vector_ensureextra($self,$len)
         val data = vector_raw_data($self)
