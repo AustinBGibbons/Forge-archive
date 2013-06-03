@@ -16,35 +16,34 @@ trait MapTestDSL extends ForgeApplication {
   }
     
   def importMapTestOps() {
-    val T = tpePar("T")
-    val MultiSet = tpe("MultiSet", T)
+    val MultiSet = tpe("MultiSet")
 
-    val MTI = tpeInst(MMap, List(T, MInt))
+    val MFI = tpeInst(MMap, List(MFloat, MInt))
 
-    data(MultiSet, ("_map", MTI))
+    data(MultiSet, ("_map", MFI))
 
-    static (MultiSet) ("apply", T, Nil :: MultiSet(T), effect = mutable) implements allocates (MultiSet, ${
-      map_empty[T, Int]()
+    static (MultiSet) ("apply", Nil, Nil :: MultiSet, effect = mutable) implements allocates (MultiSet, ${
+      map_empty[Float, Int]()
     })
 
     val MultiSetOps = withTpe (MultiSet)
     MultiSetOps {
-      compiler ("getMap") (Nil :: MTI) implements getter (0, "_map")
-      compiler ("setMap") (MTI :: MUnit, effect=write(0)) implements setter(0, "_map", ${$1})
+      compiler ("getMap") (Nil :: MFI) implements getter (0, "_map")
+      compiler ("setMap") (MFI :: MUnit, effect=write(0)) implements setter(0, "_map", ${$1})
   
-      infix ("getOrElseWrapper") ((MTI, T) :: MInt) implements composite ${
+      infix ("getOrElseWrapper") ((MFI, MFloat) :: MInt) implements composite ${
         map_getOrElse($1, $2, 0) match {
           case x: Int => x
           case x: Rep[Int] => x
         }
       }
 
-      infix ("add") (T :: MUnit, effect=write(0)) implements composite ${
+      infix ("add") (MFloat :: MUnit, effect=write(0)) implements composite ${
         val m = getMap($self)
         map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
       }
 
-      infix ("remove") (T :: MInt, effect=write(0)) implements composite ${
+      infix ("remove") (MFloat :: MInt, effect=write(0)) implements composite ${
         val m = getMap($self)
         val curr = $self.count($1)
         if(curr == 1) {
@@ -60,11 +59,11 @@ trait MapTestDSL extends ForgeApplication {
         }
       }
 
-      infix ("contains") (T :: MBoolean) implements composite ${
+      infix ("contains") (MFloat :: MBoolean) implements composite ${
         map_contains(getMap($self), $1)
       }
 
-      infix ("count") (T :: MInt) implements composite ${
+      infix ("count") (MFloat :: MInt) implements composite ${
         map_getOrElse(getMap($self), $1, 0) match {
           case x: Int => x
           case x: Rep[Int] => x
