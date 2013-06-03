@@ -22,6 +22,9 @@ trait Base extends ForgeApplication {
     direct (Clock) ("clock", Nil, MUnit :: MInt, effect = simple) implements codegen ($cala, ${
       System.currentTimeMillis().toInt
     })
+    direct (Clock) ("clock", Nil, MAny :: MInt, effect = simple) implements codegen ($cala, ${
+      System.currentTimeMillis().toInt
+    })
   }
 }
 
