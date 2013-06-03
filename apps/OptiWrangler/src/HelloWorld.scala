@@ -11,6 +11,9 @@ trait HelloWrangler extends OptiWranglerApplication {
     //println(args(0))
     //val col = Table(0, "").tableFromFile("/afs/cs.stanford.edu/u/gibbons4/data/singleCol.txt")
     val now = clock()
+    val table = Table(args(0))
+    println("Loaded from file : " + ((clock() - now) / 1e3.toDouble))
+  /*
     val col = Table(0, "").tableFromFile(args(0))
     println("Loaded from file : " + ((clock() - now) / 1e3.toDouble))
    // col(0) = Array("1")
@@ -24,7 +27,7 @@ trait HelloWrangler extends OptiWranglerApplication {
     x.tableToFile("/home/gibbons4/data/")
     println("Written to file : " + ((clock() - now3) / 1e3.toDouble))
 
-    println("just kidding none of that is blocking.")
+*/
 /*
     println(cutcol(0,0))
     println(cutcol(1, 0))
