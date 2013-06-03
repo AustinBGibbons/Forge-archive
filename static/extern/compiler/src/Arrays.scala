@@ -38,6 +38,8 @@ trait ForgeArrayOpsExp extends DeliteArrayFatExp {
     }
     out.unsafeImmutable
   }
+  def array_range(st: Rep[Int], en: Rep[Int])(implicit __imp0: SourceContext): Rep[ForgeArray[Int]]
+    = darray_range(st, en)
         
   // avoid mixing in LMS Array ops due to conflicts. alternatively, we could refactor LMS array ops to 
   // put ArrayApply and ArrayLength in an isolated trait that we can use.

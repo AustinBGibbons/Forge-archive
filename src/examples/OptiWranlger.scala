@@ -48,10 +48,10 @@ trait OptiWranglerDSL extends Base {
     
     val TableOps = withTpe (Table)
     TableOps {
-      // ops
+      // getters and setters
       compiler ("data") (Nil :: SSArray) implements getter(0, "_data")
       compiler ("header") (Nil :: MSI) implements getter(0, "_header")
-      compiler ("length") (Nil :: MInt) implements getter(0, "_length")
+      infix ("length") (Nil :: MInt) implements getter(0, "_length")
       compiler ("width") (Nil :: MInt) implements getter(0, "_width")
       compiler ("name") (Nil :: MString) implements getter(0, "_name")
       compiler ("set_data") (SSArray :: MUnit, effect=write(0)) implements setter(0, "_data", quotedArg(1))
@@ -60,8 +60,67 @@ trait OptiWranglerDSL extends Base {
       compiler ("set_width") (MInt :: MUnit, effect=write(0)) implements setter(0, "_width", quotedArg(1))
       compiler ("set_name") (MString :: MUnit, effect=write(0)) implements setter(0, "_name", quotedArg(1))
 
-      
+      // parallelization - trying this style
+      infix ("apply") (MInt :: Table, effect=mutable) implements allocates (Table, 
+        ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${array_length(array_apply(data($0), unit(0)))}, 
+          ${map_empty[String, Int]()}, ${name($0)}
+      )
+      // infix ("length") (Nil :: MInt) implements composite ${ length($self) }
+      infix ("apply") (MInt :: SArray) implements composite ${ array_apply(data($self), $1) }
+      infix ("update") ((MInt, SArray) :: MUnit, effect=write(0)) implements
+        composite ${ array_update(data($self), $1, $2) } 
+
+      parallelize as ParallelCollection(SArray, lookupOverloaded("apply", 0), lookupOp("length"), lookupOverloaded("apply", 1), lookupOp("update"))
+
+      // More bones
+      infix ("apply") ((MInt, MInt) :: MString) implements composite ${
+        array_apply(array_apply(data($self), $1), $2)
+      } 
+/*
+      infix ("putHeader") ((MString, MInt) :: MUnit, effect = write(0)) implements composite ${
+        map_put[String, Int](header($self), $1, $2)
+      }
+
+      infix ("getHeader") (MString :: MInt) implements composite ${
+        map_getOrElse[String, Int](header($self), $1, -1) match {
+          case x: Int => x
+          case z: Rep[Int] => z
+          case _ => {goodbye("failed to match map_get outer") ; unit(-1)}
+        }
+      }
+
+      infix ("getHeaderIndex") (MString :: MInt) implements composite ${
+        if(not(map_contains(header($self), $1))) goodbye("Requested a header which doesn't exist : " + $1)
+        map_getOrElse[String, Int](header($self), $1, -1) match {
+          case x: Int => x
+          case x: Rep[Int] => x
+        }
+      }
+
+      infix ("getColumn") (MInt :: MInt) implements composite ${$1}
+      infix ("getColumn") (MString :: MInt) implements composite ${$self.getHeaderIndex($1)}
+  */
+      // the biggest todo of them all : best path : "Column" type
+      infix ("getColumns") (MAny :: MArray(MInt)) implements composite ${array_range(0, width($self))}
+
+      infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => 
+        mapBody(row, $1, $2, $3)
+      })
+
+      infix ("map") ((MString ==> MString, MAny) :: Table) implements composite ${
+        val _width = array_range(0, width($self))   
+        val indices = $self.getColumns($2)
+        $self.mapHelper($1, _width, indices)
+      }
+
+      // Meat
+      infix ("cut") ((MString, MAny) :: Table) implements composite ${
+        $self.map(_.replaceFirst($1, ""), $2)
+      }
     }
+
+
+    //////////////////////////// Codegen ///////////////////////////////
 
     direct (Table) ("parseFileName", Nil, MString :: MString) implements codegen ($cala, ${
       val fileName = $0
@@ -88,11 +147,20 @@ trait OptiWranglerDSL extends Base {
       }
     })
 
+    // Scala generation tests
+    direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
+      $0.zip($2).map{case(cell, index) => 
+        if ($b[3].contains(index)) $b[1](cell)
+        else cell
+      }
+    })
+
+    // I/O
     static (Table) ("apply", Nil, (SSArray, MInt, MInt, MSI, MString) :: Table, effect = mutable) implements allocates(Table, ${$0}, ${$1}, ${$2}, ${$3}, ${$4})
 
     static (Table) ("apply", Nil, MString :: Table) implements composite ${
       val d = fromFile($0)
-      Table(d, array_length(d), array_length(array_apply(d, 0)), map_empty[String, Int](), parseFileName($0))
+      Table(d, array_length(d), array_length(array_apply(d,0)), map_empty[String, Int](), parseFileName($0))
     }
 
     direct (Table) ("fromFile", Nil, MString :: SSArray) implements codegen ($cala, ${
@@ -106,5 +174,6 @@ trait OptiWranglerDSL extends Base {
       of.close()
     })
 
+    //()
   }
 }
