@@ -15,6 +15,14 @@ trait Base extends ForgeApplication {
       System.exit(-1)
     })
   }
+    
+  def addClock() {
+    val Clock = grp("Clock")
+  
+    direct (Table) ("clock", Nil, MUnit :: MInt, effect = simple) implements codegen ($cala, ${
+      System.currentTimeMillis().toInt
+    })
+  }
 }
 
 trait OptiWranglerDSL extends Base {
@@ -23,6 +31,7 @@ trait OptiWranglerDSL extends Base {
   def specification() = {
     importScalaOps()
     addErrorChecking()
+    addClock()
     //addWranglerOps()
     addTableOps()
   }
@@ -33,13 +42,25 @@ trait OptiWranglerDSL extends Base {
     val SSArray = tpeInst(MArray, SArray) 
     val MSI = tpeInst(MMap, List(MString, MInt))
   
-    data(Table, ("data", SSArray), ("width", MInt), ("header", MSI), ("name", MString))
+    data(Table, ("_data", SSArray), ("_length", MInt), ("_width", MInt), ("_header", MSI), ("_name", MString))
 
     // allocators - I think I'm going to move codegen to underneath spec
     
     val TableOps = withTpe (Table)
     TableOps {
       // ops
+      compiler ("data") (Nil :: SSArray) implements getter(0, "_data")
+      compiler ("header") (Nil :: MSI) implements getter(0, "_header")
+      compiler ("length") (Nil :: MInt) implements getter(0, "_length")
+      compiler ("width") (Nil :: MInt) implements getter(0, "_width")
+      compiler ("name") (Nil :: MString) implements getter(0, "_name")
+      compiler ("set_data") (SSArray :: MUnit, effect=write(0)) implements setter(0, "_data", quotedArg(1))
+      compiler ("set_header") (MSI :: MUnit, effect=write(0)) implements setter(0, "_header", quotedArg(1))
+      compiler ("set_length") (MInt :: MUnit, effect=write(0)) implements setter(0, "_length", quotedArg(1))
+      compiler ("set_width") (MInt :: MUnit, effect=write(0)) implements setter(0, "_width", quotedArg(1))
+      compiler ("set_name") (MString :: MUnit, effect=write(0)) implements setter(0, "_name", quotedArg(1))
+
+      
     }
   }
 }
