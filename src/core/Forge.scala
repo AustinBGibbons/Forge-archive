@@ -75,6 +75,7 @@ trait ForgeExp extends Forge with ForgeUtilities with ForgeScalaOpsPkgExp with D
     case `MInt` | `MFloat` | `MDouble` | `MBoolean` | `MString` | `MUnit` | `MAny` | `MNothing` | `MSourceContext` | `byName` => true
     case Def(Tpe(_,_,`now`)) => true 
     case Def(Tpe("ForgeArray",_,_)) | Def(Tpe("ForgeArrayBuffer",_,_)) => true
+    case Def(Tpe("SmallMap",_,_)) => true
     case Def(Tpe("Var",_,_)) => true
     case Def(Tpe("Overloaded",_,_)) => true
     case _ => false
