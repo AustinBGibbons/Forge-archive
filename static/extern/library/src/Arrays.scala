@@ -34,6 +34,9 @@ trait ForgeArrayWrapper extends HUMAN_DSL_NAMEBase {
     = array_apply(__arg0,__arg1)
   def scala_array_length[T:Manifest](__arg0: Rep[Array[T]])(implicit __imp0: SourceContext): Rep[Int] 
     = array_length(__arg0)
+
+  def array_flatmap[A:Manifest,B:Manifest](a: Rep[ForgeArray[A]], f: Rep[A] => Rep[ForgeArray[B]])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
+    = a.map(f).reduce(_ union _)
 }
 
 trait ForgeArrayBufferWrapper extends HUMAN_DSL_NAMEBase {

@@ -295,6 +295,20 @@ trait ScalaOps {
       $0.replaceFirst($1, $2)
     })
 
+    infix (Str) ("replaceAll", Nil, (MString, MString, MString) :: MString) implements codegen($cala, ${
+      $0.replaceAll($1, $2)
+    })
+
+    infix (Str) ("size", Nil, MString :: MInt) implements codegen($cala, ${ $0.size })
+
+    infix (Str) ("substring", Nil, (MString, MInt) :: MString) implements codegen($cala, ${ $0.substring($1)})
+
+    infix (Str) ("substring", Nil, (MString, MInt, MInt) :: MString) implements codegen($cala, ${ $0.substring($1, $2)})
+    
+    infix (Str) ("indexOf", Nil, (MString, MString) :: MInt) implements codegen($cala, ${$0.indexOf($1)})
+    
+    infix (Str) ("lastIndexOf", Nil, (MString, MString) :: MInt) implements codegen($cala, ${$0.lastIndexOf($1)})
+
     infix (Str) ("toInt", Nil, MString :: MInt) implements codegen($cala, ${ $0.toInt })
     infix (Str) ("toFloat", Nil, MString :: MFloat) implements codegen($cala, ${ $0.toFloat })
     infix (Str) ("toDouble", Nil, MString :: MDouble) implements codegen($cala, ${ $0.toDouble })

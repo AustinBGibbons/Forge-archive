@@ -40,7 +40,11 @@ trait ForgeArrayOpsExp extends DeliteArrayFatExp {
   }
   def array_range(st: Rep[Int], en: Rep[Int])(implicit __imp0: SourceContext): Rep[ForgeArray[Int]]
     = darray_range(st, en)
-        
+ 
+  def array_flatmap[A:Manifest,B:Manifest](a: Rep[ForgeArray[A]], f: Rep[A] => Rep[ForgeArray[B]])(implicit __imp0: SourceContext): Rep[ForgeArray[B]]
+    = darray_reduce[ForgeArray[B]](darray_map[A,ForgeArray[B]](a, f), darray_union[B], array_empty[B](unit(0)))
+
+       
   // avoid mixing in LMS Array ops due to conflicts. alternatively, we could refactor LMS array ops to 
   // put ArrayApply and ArrayLength in an isolated trait that we can use.
   case class ArrayApply[T:Manifest](a: Exp[Array[T]], n: Exp[Int]) extends Def[T]
