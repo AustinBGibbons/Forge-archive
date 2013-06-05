@@ -42,8 +42,9 @@ trait MapTestDSL extends ForgeApplication {
       infix ("ms_add") (T :: MUnit, effect=write(0)) implements composite ${
         val m = getMap($self)
         //map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
-        val new_value = $self.getOrElseWrapper(m, $1) + 1
-        map_put(m, $1, new_value)
+        map_put(m, $1, forge_int_plus($self.getOrElseWrapper(m, $1), 1))
+        //val new_value = $self.getOrElseWrapper(m, $1) + 1
+        //map_put(m, $1, new_value)
         setMap($self, m)
       }
 
@@ -68,7 +69,7 @@ trait MapTestDSL extends ForgeApplication {
         }
       }
 
-      infix ("ms_contains") (T :: MBoolean) implements composite ${
+      infix ("contains") (T :: MBoolean) implements composite ${
         map_contains(getMap($self), $1)
       }
 
@@ -77,6 +78,10 @@ trait MapTestDSL extends ForgeApplication {
           case x: Int => x
           case x: Rep[Int] => x
         }
+      }
+
+      infix ("Captain_Planet") (T :: MString) implements composite ${
+        "he's a hero"
       }
     }
 

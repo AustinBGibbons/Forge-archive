@@ -34,7 +34,14 @@ trait SimpleVectorDSL extends ForgeApplication {
     val R = tpePar("R")
     
     val Vector = tpe("Vector", T) 
-  
+ 
+    // testing the Captain
+ //   direct (Vector) ("Captain_Planet", )
+ 
+    direct (Vector) ("contains", Nil, (MArray(MInt), MInt) :: MBoolean) implements codegen ($cala, ${
+      $0.contains($1)
+    })
+
     // data fields     
     data(Vector, ("_length", MInt), ("_data", MArray(T)))      
   

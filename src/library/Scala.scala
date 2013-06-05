@@ -291,6 +291,10 @@ trait ScalaOps {
     // overloaded variants of string concat
     val T = tpePar("T") 
 
+    infix (Str) ("Captain_Planet", Nil, MString :: MString) implements codegen($cala, ${ "EFWWH" })
+    infix (Str) ("contains", Nil, (MString, MString) :: MBoolean) implements codegen($cala, ${$0.contains($1)})
+  
+
     infix (Str) ("toInt", Nil, MString :: MInt) implements codegen($cala, ${ $0.toInt })
     infix (Str) ("toFloat", Nil, MString :: MFloat) implements codegen($cala, ${ $0.toFloat })
     infix (Str) ("toDouble", Nil, MString :: MDouble) implements codegen($cala, ${ $0.toDouble })
