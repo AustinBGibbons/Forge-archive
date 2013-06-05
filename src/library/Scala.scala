@@ -309,6 +309,8 @@ trait ScalaOps {
     
     infix (Str) ("lastIndexOf", Nil, (MString, MString) :: MInt) implements codegen($cala, ${$0.lastIndexOf($1)})
 
+    infix (Str) ("split", Nil, (MString, MString) :: MArray(MString)) implements codegen($cala, ${$0.split($1)})
+
     infix (Str) ("toInt", Nil, MString :: MInt) implements codegen($cala, ${ $0.toInt })
     infix (Str) ("toFloat", Nil, MString :: MFloat) implements codegen($cala, ${ $0.toFloat })
     infix (Str) ("toDouble", Nil, MString :: MDouble) implements codegen($cala, ${ $0.toDouble })

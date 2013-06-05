@@ -126,11 +126,12 @@ trait OptiWranglerDSL extends Base {
           case Manifest.Int => 
         }
       }
-
-      infix ("getColumns") (MAny :: MArray(MInt)) implements composite ${ 
-        getColumnsBody($1, header($self))
-      }
 */
+      //infix ("getColumns") (MAny :: MArray(MInt)) implements composite ${ 
+      infix ("getColumns") (MArray(MInt) :: MArray(MInt)) implements composite ${ 
+        //getColumnsBody($1, header($self))
+        $1
+      }
 
       infix ("promote") (SArray :: Table) implements composite ${
         set_header($self, promoteBody($1, width($self)))
@@ -145,7 +146,7 @@ trait OptiWranglerDSL extends Base {
 
       infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
 
-      infix ("map") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
         val _width = array_range(0, width($self))   
         val indices = $self.getColumns($2)
         $self.mapHelper($1, _width, indices)
@@ -159,7 +160,7 @@ trait OptiWranglerDSL extends Base {
         $self
       }
 
-      infix ("flatMap") ((MString ==> SArray, MAny) :: Table) implements composite ${
+      infix ("flatMap") ((MString ==> SArray, MArray(MInt)) :: Table) implements composite ${
         val _width = array_range(0, width($self))
         val indices = $self.getColumns($2)
         $self.flatMapHelper($1, _width, indices)
@@ -167,14 +168,23 @@ trait OptiWranglerDSL extends Base {
 
       infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => filterBody(row, $1, $2, $3)}, ${e => e})
 
-      infix ("filter") ((MString ==> MBoolean, MAny) :: Table) implements composite ${
+      infix ("filter") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements composite ${
         val _width = array_range(0, width($self))   
         val indices = $self.getColumns($2)
         $self.filterHelper($1, _width, indices)
       }
 
       // Meat
-      infix ("cut") ((MInt, MAny) :: Table) implements composite ${
+      // TODO - check me
+      infix ("cut") ((MInt, MInt) :: Table) implements composite ${
+        $self.cut($1, array($2))
+      }
+
+      infix ("cut") (MInt :: Table) implements composite ${
+        $self.cut($1, array_range(0, width($self)))
+      }
+
+      infix ("cut") ((MInt, MArray(MInt)) :: Table) implements composite ${
         $self.map(cell => {
           if ($1 < 0) goodbye("Trying to cut on bad index: " + $1)
           if ($1 >= cell.size) cell
@@ -182,23 +192,25 @@ trait OptiWranglerDSL extends Base {
         }, $2)
       }
   
-      infix ("cut") (MInt :: Table) implements composite ${
-        $self.cut($1, array_range(0, width($self)))
+      infix ("cut") ((MString, MInt) :: Table) implements composite ${
+        $self.cut($1, array($2))
       }
 
       infix ("cut") (MString :: Table) implements composite ${
         $self.cut($1, array_range(0, width($self)))
       }
 
-      infix ("cut") ((MString, MAny) :: Table) implements composite ${
+      infix ("cut") ((MString, MArray(MInt)) :: Table) implements composite ${
         $self.map(_.replaceFirst($1, ""), $2)
       }
+
+      // disregard functions in hacky solutions for now
 
       infix ("cut") ((MString ==> MString) :: Table) implements composite ${
         $self.cut($1, array_range(0, width($self)))
       }
 
-      infix ("cut") ((MString ==> MString, MAny) :: Table) implements composite ${
+      infix ("cut") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
         $self.map(cell => {
           //try
           val result = $1(cell)
@@ -208,11 +220,16 @@ trait OptiWranglerDSL extends Base {
         }, $2)
       }
 
+      // TODO - check me
+      infix ("cutRight") ((MString, MInt) :: Table) implements composite ${
+        $self.cutRight($1, array($2))
+      }
+
       infix ("cutRight") (MString :: Table) implements composite ${
         $self.cutRight($1, array_range(0, width($self)))
       }
 
-      infix ("cutRight") ((MString, MAny) :: Table) implements composite ${
+      infix ("cutRight") ((MString, MArray(MInt)) :: Table) implements composite ${
         $self.map(cell => {
           val index = cell.lastIndexOf($1)
           if (index == -1) cell
@@ -220,12 +237,95 @@ trait OptiWranglerDSL extends Base {
         }, $2)
       }
 
+      infix ("cutAll") ((MString, MInt) :: Table) implements composite ${
+        $self.cutAll($1, array($2))
+      }
+
       infix ("cutAll") (MString :: Table) implements composite ${
         $self.cutAll($1, array_range(0, width($self)))
       }
 
-      infix ("cutAll") ((MString, MAny) :: Table) implements composite ${
+      infix ("cutAll") ((MString, MArray(MInt)) :: Table) implements composite ${
         $self.map(_.replaceAll($1, ""), $2)
+      }
+
+      ///////// Split /////////
+
+      infix ("split") (MInt :: Table) implements composite ${
+        $self.split($1, array_range(0, width($self)))
+      }
+
+      infix ("split") ((MInt, MInt) :: Table) implements composite ${
+        $self.split($1, array($2))
+      }
+
+      infix ("split") ((MInt, MArray(MInt)) :: Table) implements composite ${
+        if ($1 < 0) goodbye ("Trying to split on a bad index : " + $1)
+        $self.flatMap(cell => { 
+          if ($1 < cell.size) array(cell.substring(0, $1), cell.substring($1 + 1))
+          else array(cell, "")
+        }, $2)
+      }
+
+      infix ("split") (MString :: Table) implements composite ${
+        $self.split($1, array_range(0, width($self)))
+      }
+
+      infix ("split") ((MString, MInt) :: Table) implements composite ${
+        $self.split($1, array($2))
+      }
+
+      infix ("split") ((MString, MArray(MInt)) :: Table) implements composite ${
+        $self.flatMap(cell => {
+          val index = cell.indexOf($1)
+          if(index != -1) array(cell.substring(0, index), cell.substring(index + $1.size))
+          else array(cell, "")
+        }, $2)
+      }
+
+      infix ("split") ((MString ==> MString) :: Table) implements composite ${
+        $self.split($1, array_range(0, width($self)))
+      }
+
+      infix ("split") ((MString ==> MString, MInt) :: Table) implements composite ${
+        $self.split($1, array($2))
+      }
+
+      infix ("split") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
+        $self.flatMap(cell => {
+          val result = $1(cell)
+          val index = cell.indexOf(result)
+          if (index != -1) array(cell.substring(0, index), cell.substring(index + result.size))
+          else array(cell, "")
+        }, $2)
+      }
+
+      infix ("splitRight") (MString :: Table) implements composite ${
+        $self.splitRight($1, array_range(0, width($self)))
+      }
+
+      infix ("splitRight") ((MString, MInt) :: Table) implements composite ${
+        $self.splitRight($1, array($2))
+      }
+
+      infix ("splitRight") ((MString, MArray(MInt)) :: Table) implements composite ${
+        $self.flatMap(cell => {
+          val index = cell.lastIndexOf($1)
+          if(index != -1) array(cell.substring(0, index), cell.substring(index + $1.size))
+          else array(cell, "")
+        }, $2)
+      }
+
+      infix ("splitAll") (MString :: Table) implements composite ${
+        $self.splitAll($1, array_range(0, width($self)))
+      }
+
+      infix ("splitAll") ((MString, MInt) :: Table) implements composite ${
+        $self.splitAll($1, array($2))
+      }
+
+      infix ("splitAll") ((MString, MArray(MInt) :: Table) implements composite ${
+        $self.flatMap(_.split($1), $2)
       }
 
       // IO - user
@@ -268,6 +368,18 @@ trait OptiWranglerDSL extends Base {
     })
 
     // Scala generation - easiest development path for the moment
+    direct (Table) ("array", Nil, MString :: MArray(MString)) implements codegen ($cala, ${
+      Array($0)
+    })
+
+    direct (Table) ("array", Nil, (MString, MString) :: MArray(MString)) implements codegen ($cala, ${
+      Array($0)
+    })
+
+    direct (Table) ("array", Nil, MInt :: MArray(MInt)) implements codegen ($cala, ${
+      Array($0)
+    })
+
     direct (Table) ("getColumnsBody", Nil, (MAny, MSI) :: MArray(MInt)) implements codegen ($cala, ${
       def getColumn(column: Any, header : scala.collection.mutable.HashMap[String, Int]): Int = column match {
         case x: Int => x // no warnings because I didn't pass width along :-/
