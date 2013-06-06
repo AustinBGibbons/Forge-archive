@@ -50,6 +50,8 @@ trait OptiWranglerDSL extends Base {
 
     // allocators - I think I'm going to move codegen to underneath spec
     
+    direct (Table) ("intZero", Nil, Nil :: MString) implements single ${"0"}
+
     val TableOps = withTpe (Table)
     TableOps {
       // getters and setters
@@ -90,8 +92,8 @@ trait OptiWranglerDSL extends Base {
         set_length($self, $self.length + $2)
       }
       infix ("append") ((MInt, SArray) :: MUnit, effect=write(0)) implements single ${
-        insertspace($self, $1, 1)
-        $self($1) = $2
+        insertspace($self, $self.length, 1)
+        $self($self.length) = $2
       }
       compiler ("appendable") ((MInt, SArray) :: MBoolean) implements single("true")
       compiler ("copy") ((MInt, Table, MInt, MInt) :: MUnit, effect=write(2)) implements single ${
@@ -153,17 +155,24 @@ trait OptiWranglerDSL extends Base {
       }
 
       // todo : implements flatMap
-      infix ("flatMapHelper") ((MString ==> SArray, MArray(MInt), MArray(MInt)) :: Table) implements composite ${
-        set_data($self, array_flatmap[ForgeArray[String], ForgeArray[String]](data($self), row =>
-          flatMapBody(row, $1, $2, $3)
-        ))
-        $self
+      infix ("flatMapHelper") ((MString ==> SArray, MArray(MInt), MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => flatMapBody(row, $1, $2, $3, $4)})
+
+      // so hacky
+      infix ("newSizesMap") ((MString ==> SArray, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapIntBody(row, $1, $2, $3) })
+
+      infix ("newSizesReduce") (Nil :: MString) implements reduce(MString, 0, lookupOp("Table", "intZero"), ${
+        (a,b) => newSizesReduceBody(a, b)
+      })
+
+      infix ("newSizes") ((MString ==> SArray, MArray(MInt), MArray(MInt)) :: MArray(MInt)) implements composite ${
+        $self.newSizesMap($1, $2, $3).newSizesReduce()
       }
 
       infix ("flatMap") ((MString ==> SArray, MArray(MInt)) :: Table) implements composite ${
         val _width = array_range(0, width($self))
         val indices = $self.getColumns($2)
-        $self.flatMapHelper($1, _width, indices)
+        val _new_sizes = $self.newSizes($1, _width, indices)
+        $self.flatMapHelper($1, _width, indices, _new_sizes)
       }
 
       infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => filterBody(row, $1, $2, $3)}, ${e => e})
@@ -278,7 +287,7 @@ trait OptiWranglerDSL extends Base {
       infix ("split") ((MString, MArray(MInt)) :: Table) implements composite ${
         $self.flatMap(cell => {
           val index = cell.indexOf($1)
-          if(index != -1) array(cell.substring(0, index), cell.substring(index + $1.size))
+          if(index ne -1) array(cell.substring(0, index), cell.substring(index + $1.size))
           else array(cell, "")
         }, $2)
       }
@@ -295,11 +304,10 @@ trait OptiWranglerDSL extends Base {
         $self.flatMap(cell => {
           val result = $1(cell)
           val index = cell.indexOf(result)
-          if (index != -1) array(cell.substring(0, index), cell.substring(index + result.size))
+          if (index ne -1) array(cell.substring(0, index), cell.substring(index + result.size))
           else array(cell, "")
         }, $2)
       }
-
       infix ("splitRight") (MString :: Table) implements composite ${
         $self.splitRight($1, array_range(0, width($self)))
       }
@@ -311,7 +319,7 @@ trait OptiWranglerDSL extends Base {
       infix ("splitRight") ((MString, MArray(MInt)) :: Table) implements composite ${
         $self.flatMap(cell => {
           val index = cell.lastIndexOf($1)
-          if(index != -1) array(cell.substring(0, index), cell.substring(index + $1.size))
+          if(index ne -1) array(cell.substring(0, index), cell.substring(index + $1.size))
           else array(cell, "")
         }, $2)
       }
@@ -324,9 +332,11 @@ trait OptiWranglerDSL extends Base {
         $self.splitAll($1, array($2))
       }
 
-      infix ("splitAll") ((MString, MArray(MInt) :: Table) implements composite ${
+      infix ("splitAll") ((MString, MArray(MInt)) :: Table) implements composite ${
         $self.flatMap(_.split($1), $2)
       }
+
+      ///////////////
 
       // IO - user
       infix ("toFile") (MString :: MUnit, effect = simple) implements composite ${
@@ -380,6 +390,8 @@ trait OptiWranglerDSL extends Base {
       Array($0)
     })
 
+    direct (Table) ("newSizesReduceBody", Nil, (MString, MString) :: MInt) implements codegen ($cala, ${ scala.math.max($0.toInt, $1.toInt) })
+
     direct (Table) ("getColumnsBody", Nil, (MAny, MSI) :: MArray(MInt)) implements codegen ($cala, ${
       def getColumn(column: Any, header : scala.collection.mutable.HashMap[String, Int]): Int = column match {
         case x: Int => x // no warnings because I didn't pass width along :-/
@@ -401,6 +413,13 @@ trait OptiWranglerDSL extends Base {
       y
     })
 
+    direct (Table) ("mapIntBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
+      $0.zip($2).map{case(cell, index) => 
+        if ($b[3].contains(index)) $b[1](cell).size.toString
+        else "1" // I do what I want
+      }
+    })
+
     direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
       $0.zip($2).map{case(cell, index) => 
         if ($b[3].contains(index)) $b[1](cell)
@@ -408,10 +427,11 @@ trait OptiWranglerDSL extends Base {
       }
     })
 
-    direct (Table) ("flatMapBody", Nil, (SArray, MString ==> SArray, MArray(MInt), MArray(MInt)) :: SSArray) implements codegen ($cala, ${
-      $0.zip($2).map{case(cell, index) => 
-        if ($b[3].contains(index)) $b[1](cell)
-        else Array(cell)
+    direct (Table) ("flatMapBody", Nil, (SArray, MString ==> SArray, MArray(MInt), MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
+      def stretch(arr: Array[String], size: Int) = arr ++ Array.fill[String](size-arr.size)("")
+      $0.zip($2).flatMap{case(cell, index) => 
+        if ($b[3].contains(index)) stretch($b[1](cell), $b[4](index))
+        else stretch(Array(cell), $b[4](index))
       }
     })
 
