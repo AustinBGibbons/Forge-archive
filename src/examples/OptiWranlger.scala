@@ -68,7 +68,7 @@ trait OptiWranglerDSL extends Base {
 
       // parallelization - trying this style
       infix ("new_table") (MInt :: Table, effect=mutable) implements allocates (Table, 
-        ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${array_length(array_apply(data($0), unit(0)))}, 
+        ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${width($0)}, 
           ${map_empty[String, Int]()}, ${name($0)}
       )
       // infix ("length") (Nil :: MInt) implements composite ${ length($self) }
@@ -83,12 +83,16 @@ trait OptiWranglerDSL extends Base {
         while (n < $1) n = n*2
         val dnew = array_empty[ForgeArray[String]](n)
         array_copy(d, 0, dnew, 0, $self.length)
-        set_data($self, d.unsafeImmutable)
+        set_data($self, dnew.unsafeImmutable)
       }
       compiler ("insertspace") ((MInt, MInt) :: MUnit, effect = write(0)) implements single ${
+  //      println(array_length(data($self)) + " " + $self.length + " " + $2)
+        if(array_length(data($self)) - $self.length <= $2) {
+          realloc($self, $self.length + $2)
+        }
+   //     println(array_length(data($self)) + " " + $self.length + " " + $2)
         val d = data($self)
-        if(array_length(d) - $self.length < $2) realloc($self, $self.length + $2)
-        array_copy(d, $1, d, $1 + $2, $self.length - $2)
+        array_copy(d, $1, d, $1 + $2, $self.length - $1)
         set_length($self, $self.length + $2)
       }
       infix ("append") ((MInt, SArray) :: MUnit, effect=write(0)) implements single ${
@@ -186,6 +190,10 @@ trait OptiWranglerDSL extends Base {
       }
 
       // Meat
+      infix ("cutBefore") ((MInt, MInt) :: Table) implements composite ${
+        $self.cut($1, array($2))
+      }
+
       // TODO - check me
       infix ("cut") ((MInt, MInt) :: Table) implements composite ${
         $self.cut($1, array($2))
@@ -338,7 +346,24 @@ trait OptiWranglerDSL extends Base {
         $self.flatMap(_.split($1), $2)
       }
 
+      infix ("drop") (MInt :: Table) implements map ((SArray, SArray), 0, ${
+        row => dropBody(row, $1)
+      })
+
+      infix ("delete") ((MString ==> MBoolean, MInt) :: Table) implements composite ${
+        $self.filter($1, array($2))
+      }
+
+      infix ("delete") ((MString ==> MBoolean) :: Table) implements composite ${
+        $self.filter($1, array_range(0, width($self)))
+      }
+
       ///////////////
+        
+      infix ("force") (Nil :: Table) implements composite ${
+        println($self.length)
+        $self
+      }
 
       // IO - user
       infix ("toFile") (MString :: MUnit, effect = simple) implements composite ${
@@ -348,6 +373,8 @@ trait OptiWranglerDSL extends Base {
 
 
     //////////////////////////// Codegen ///////////////////////////////
+
+    //direct (Table) ("print") (MInt :: MUnit) implements codegen ($cala, ${println($0)})
 
     direct (Table) ("parseFileName", Nil, MString :: MString) implements codegen ($cala, ${
       val fileName = $0
@@ -394,6 +421,10 @@ trait OptiWranglerDSL extends Base {
 
     //direct (Table) ("newSizesReduceBody", Nil, (MString, MString) :: MInt) implements codegen ($cala, ${ scala.math.max($0.toInt, $1.toInt) })
 
+    direct (Table) ("dropBody", Nil, (SArray, MInt) :: SArray) implements codegen ($cala, ${
+      $0.take($1) ++ $0.drop($1 + 1)
+    })
+
     direct (Table) ("getColumnsBody", Nil, (MAny, MSI) :: MArray(MInt)) implements codegen ($cala, ${
       def getColumn(column: Any, header : scala.collection.mutable.HashMap[String, Int]): Int = column match {
         case x: Int => x // no warnings because I didn't pass width along :-/
@@ -423,6 +454,13 @@ trait OptiWranglerDSL extends Base {
     })
 */
     direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
+    /*
+      println("Hi ==")
+      println($0)
+      println($2)
+    */
+      if ($0 == null) null
+      else
       $0.zip($2).map{case(cell, index) => 
         if ($b[3].contains(index)) $b[1](cell)
         else cell
@@ -464,6 +502,15 @@ trait OptiWranglerDSL extends Base {
       val of = new java.io.PrintStream(new java.io.FileOutputStream($0 + $1))
       of.println($2.map(x => x.mkString(",")).mkString("#"))
       of.close()
+    })
+
+    // `Temp`
+    direct (Table) ("clip", Nil, MString :: MBoolean) implements codegen ($cala, ${
+      val in = $0
+      val g = "AGAT".toList
+      val gsize = g.size
+      if(in.size < gsize) false
+      else in.toList.zip(g).map{case(g,m) => (g == m) || (g == 'N')}.reduce(_ || _)
     })
 
     //()
