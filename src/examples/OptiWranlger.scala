@@ -575,7 +575,7 @@ trait OptiWranglerDSL extends Base {
     
     static (Table) ("pure", Nil, (SSArray, MInt, MInt/*, MSI, MString*/) :: Table) implements allocates(Table, ${$0}, ${$1}, ${$2}/*, ${$3}, ${$4}*/)
 
-    static (Table) ("apply", Nil, MString :: Table) implements composite ${
+    static (Table) ("apply", Nil, MString :: Table) implements single ${
       val lines = ForgeFileReader.readLines($0)(s => s)
       val d = array_empty[ForgeArray[String]](array_length(lines))
       var i = 0
