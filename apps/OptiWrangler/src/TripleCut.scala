@@ -26,7 +26,7 @@ trait TripleCut extends OptiWranglerApplication {
     val t4 = t3.cut("4")
     println("Cut 4   : " + ((clock(t4) - now) / 1e3.toDouble))
 
-    t4.toFile("/home/gibbons4/data/")
+    // t4.toFile("/home/gibbons4/data/")
 
   /*
     val col = Table(0, "").t1FromFile(args(0))

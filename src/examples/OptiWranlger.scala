@@ -46,30 +46,40 @@ trait OptiWranglerDSL extends Base {
     val SSArray = tpeInst(MArray, SArray) 
     val MSI = tpeInst(MMap, List(MString, MInt))
   
-    data(Table, ("_data", SSArray), ("_length", MInt), ("_width", MInt), ("_header", MSI), ("_name", MString))
+    data(Table, ("_data", SSArray), ("_length", MInt), ("_width", MInt)/*, ("_header", MSI), ("_name", MString)*/)
 
     // allocators - I think I'm going to move codegen to underneath spec
     
     //direct (Table) ("intZero", Nil, Nil :: MString) implements single ${"0"}
 
+    compiler (Table) ("array_contains", Nil, (MArray(MInt), MInt) :: MBoolean) implements single ${
+      var i = 0
+      var found = false
+      while(i < array_length($0) && !found) {
+        if (array_apply($0,i) == $1) found = true
+        i += 1        
+      }
+      found
+    }
+    
     val TableOps = withTpe (Table)
     TableOps {
       // getters and setters
       compiler ("data") (Nil :: SSArray) implements getter(0, "_data")
-      compiler ("header") (Nil :: MSI) implements getter(0, "_header")
+      // compiler ("header") (Nil :: MSI) implements getter(0, "_header")
       infix ("length") (Nil :: MInt) implements getter(0, "_length")
       compiler ("width") (Nil :: MInt) implements getter(0, "_width")
-      compiler ("name") (Nil :: MString) implements getter(0, "_name")
+      // compiler ("name") (Nil :: MString) implements getter(0, "_name")
       compiler ("set_data") (SSArray :: MUnit, effect=write(0)) implements setter(0, "_data", quotedArg(1))
-      compiler ("set_header") (MSI :: MUnit, effect=write(0)) implements setter(0, "_header", quotedArg(1))
+      // compiler ("set_header") (MSI :: MUnit, effect=write(0)) implements setter(0, "_header", quotedArg(1))
       compiler ("set_length") (MInt :: MUnit, effect=write(0)) implements setter(0, "_length", quotedArg(1))
       compiler ("set_width") (MInt :: MUnit, effect=write(0)) implements setter(0, "_width", quotedArg(1))
-      compiler ("set_name") (MString :: MUnit, effect=write(0)) implements setter(0, "_name", quotedArg(1))
+      // compiler ("set_name") (MString :: MUnit, effect=write(0)) implements setter(0, "_name", quotedArg(1))
 
       // parallelization - trying this style
       infix ("new_table") (MInt :: Table, effect=mutable) implements allocates (Table, 
-        ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${width($0)}, 
-          ${map_empty[String, Int]()}, ${name($0)}
+        ${array_empty[ForgeArray[String]]($1)}, ${$1}, ${width($0)}/*, 
+          ${map_empty[String, Int]()}, ${name($0)}*/
       )
       // infix ("length") (Nil :: MInt) implements composite ${ length($self) }
       infix ("apply") (MInt :: SArray) implements composite ${ array_apply(data($self), $1) }
@@ -140,7 +150,7 @@ trait OptiWranglerDSL extends Base {
       }
 
       infix ("promote") (SArray :: Table) implements composite ${
-        set_header($self, promoteBody($1, width($self)))
+        // set_header($self, promoteBody($1, width($self)))
         $self
       }
 
@@ -150,13 +160,13 @@ trait OptiWranglerDSL extends Base {
         $self
       }
 
-      infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
-
-      infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
-        val _width = array_range(0, width($self))   
-        val indices = $self.getColumns($2)
-        $self.mapHelper($1, _width, indices)
-      }
+      // infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
+      // 
+      // infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
+      //   val _width = array_range(0, width($self))   
+      //   val indices = $self.getColumns($2)
+      //   $self.mapHelper($1, _width, indices)
+      // }
 
       // todo : implements flatMap
       infix ("flatMapHelper") ((MString ==> SArray, /*MArray(MInt),*/ MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => flatMapBody(row, $1, $2, $3/*, $4*/)})
@@ -181,18 +191,101 @@ trait OptiWranglerDSL extends Base {
         $self.flatMapHelper($1, _width, indices)
       }
 
-      infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => filterBody(row, $1, $2, $3)}, ${e => e})
-
+      // --- gene app
+      
+      // direct (Table) ("filterBody", Nil, (SArray, MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: MBoolean) implements codegen ($cala, ${
+      //   val x = 3 // no op test
+      //   // row.zip(_width).exists { (cell, index) => !indices.contains(index) || f(cell) } 
+      //   $0.zip($2).map{case(cell, index) => 
+      //     if ($b[3].contains(index)) $b[1](cell)
+      //     else true
+      //   }.reduce(_ || _)
+      // })
+      // 
+      // infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => filterBody(row, $1, $2, $3)}, ${e => e})
+      
+      infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => {
+        val i = var_new(unit(0))
+        var found = unit(false)
+        while (i < array_length(row) && !found) {
+          if (array_contains($2, i) || $1(array_apply(row,i))) found = unit(true)
+          i += 1
+        }
+        found
+        // (row.zip(_width) { (cell, index) => !indices.contains(index) || f(cell) }).reduce(_ || _)
+      }}, ${e => e})
+      
       infix ("filter") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements composite ${
-        val _width = array_range(0, width($self))   
+        // val _width = array_range(0, width($self))   
+        // val indices = $self.getColumns($2)
+        // $self.filterHelper($1, _width, indices)
+        $self.filterHelper($1, $self.getColumns($2))
+      }
+      
+      infix ("delete") ((MString ==> MBoolean, MInt) :: Table) implements composite ${
+        val a = array_empty[Int](1)
+        a(0) = $2
+        $self.filter($1, a.unsafeImmutable)
+      }      
+      
+      // direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
+      // /*
+      //   println("Hi ==")
+      //   println($0)
+      //   println($2)
+      // */
+      //   if ($0 == null) null
+      //   else
+      //   $0.zip($2).map{case(cell, index) => 
+      //     if ($b[3].contains(index)) $b[1](cell)
+      //     else cell
+      //   }
+      // })
+      
+      // infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
+
+      infix ("mapHelper") ((MString ==> MString, MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => {
+        if (ordering2___equal[ForgeArray[String],Null](row,unit(null))) cast_asinstanceof[Null,ForgeArray[String]](unit(null))
+        else {
+          val out = array_empty[String](array_length(row))
+          val i = var_new(unit(0))
+          while (i < array_length(row)) {
+            if (array_contains($2, i))
+              array_update(out,i,$1(array_apply(row,i)))
+            else
+              array_update(out,i,array_apply(row,i)) 
+            i += 1
+          }
+          out.unsafeImmutable
+          // (row.zip(_width) { (cell, index) => if (indices.contains(index)) f(cell) else cell })
+        } 
+      }})
+      
+      infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
+        // val _width = array_range(0, width($self))   
         val indices = $self.getColumns($2)
-        $self.filterHelper($1, _width, indices)
+        // $self.mapHelper($1, _width, indices)
+        $self.mapHelper($1, indices)
+      }
+      
+      infix ("cut") ((MInt, MArray(MInt)) :: Table) implements composite ${
+        $self.map(cell => {
+          //if ($1 < 0) goodbye("Trying to cut on bad index: " + $1)
+          if ($1 >= cell.size) cell
+          else cell.substring(0, $1) + cell.substring($1 + 1)//ow_int_plus($1, 1))
+        }, $2)
       }
 
       // Meat
       infix ("cutBefore") ((MInt, MInt) :: Table) implements composite ${
-        $self.cut($1, array($2))
+        val a = array_empty[Int](1)
+        a(0) = $2
+        $self.cut($1, a.unsafeImmutable)
+        // $self.cut($1, array($2))
       }
+      
+      // --- gene app
+
 
       // TODO - check me
       infix ("cut") ((MInt, MInt) :: Table) implements composite ${
@@ -203,13 +296,6 @@ trait OptiWranglerDSL extends Base {
         $self.cut($1, array_range(0, width($self)))
       }
 
-      infix ("cut") ((MInt, MArray(MInt)) :: Table) implements composite ${
-        $self.map(cell => {
-          //if ($1 < 0) goodbye("Trying to cut on bad index: " + $1)
-          if ($1 >= cell.size) cell
-          else cell.substring(0, $1) + cell.substring($1 + 1)//ow_int_plus($1, 1))
-        }, $2)
-      }
   
       infix ("cut") ((MString, MInt) :: Table) implements composite ${
         $self.cut($1, array($2))
@@ -350,10 +436,6 @@ trait OptiWranglerDSL extends Base {
         row => dropBody(row, $1)
       })
 
-      infix ("delete") ((MString ==> MBoolean, MInt) :: Table) implements composite ${
-        $self.filter($1, array($2))
-      }
-
       infix ("delete") ((MString ==> MBoolean) :: Table) implements composite ${
         $self.filter($1, array_range(0, width($self)))
       }
@@ -366,9 +448,9 @@ trait OptiWranglerDSL extends Base {
       }
 
       // IO - user
-      infix ("toFile") (MString :: MUnit, effect = simple) implements composite ${
-        toFile($1, name($self), data($self), header($self))
-      }
+      // infix ("toFile") (MString :: MUnit, effect = simple) implements composite ${
+      //   toFile($1, name($self), data($self), header($self))
+      // }
     }
 
 
@@ -425,18 +507,18 @@ trait OptiWranglerDSL extends Base {
       $0.take($1) ++ $0.drop($1 + 1)
     })
 
-    direct (Table) ("getColumnsBody", Nil, (MAny, MSI) :: MArray(MInt)) implements codegen ($cala, ${
-      def getColumn(column: Any, header : scala.collection.mutable.HashMap[String, Int]): Int = column match {
-        case x: Int => x // no warnings because I didn't pass width along :-/
-        case x: String => header.getOrElse(x, -1)
-      }
-      
-      $0 match {
-        //case x: Seq[Any] => x.map(y => getColumn(y, $1)).toArray
-        case x: Array[Any] => x.map(y => getColumn(y, $1)).toArray
-        case _ => Array(getColumn($0, $1))
-      }
-    })
+    // direct (Table) ("getColumnsBody", Nil, (MAny, MSI) :: MArray(MInt)) implements codegen ($cala, ${
+    //   def getColumn(column: Any, header : scala.collection.mutable.HashMap[String, Int]): Int = column match {
+    //     case x: Int => x // no warnings because I didn't pass width along :-/
+    //     case x: String => header.getOrElse(x, -1)
+    //   }
+    //   
+    //   $0 match {
+    //     //case x: Seq[Any] => x.map(y => getColumn(y, $1)).toArray
+    //     case x: Array[Any] => x.map(y => getColumn(y, $1)).toArray
+    //     case _ => Array(getColumn($0, $1))
+    //   }
+    // })
   
     // it doesn't matter how this is implemented
     direct (Table) ("promoteBody", Nil, (SArray, MInt) :: MSI) implements codegen ($cala, ${
@@ -453,19 +535,19 @@ trait OptiWranglerDSL extends Base {
       }
     })
 */
-    direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
-    /*
-      println("Hi ==")
-      println($0)
-      println($2)
-    */
-      if ($0 == null) null
-      else
-      $0.zip($2).map{case(cell, index) => 
-        if ($b[3].contains(index)) $b[1](cell)
-        else cell
-      }
-    })
+    // direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
+    // /*
+    //   println("Hi ==")
+    //   println($0)
+    //   println($2)
+    // */
+    //   if ($0 == null) null
+    //   else
+    //   $0.zip($2).map{case(cell, index) => 
+    //     if ($b[3].contains(index)) $b[1](cell)
+    //     else cell
+    //   }
+    // })
 
     direct (Table) ("flatMapBody", Nil, (SArray, MString ==> SArray, /*MArray(MInt),*/ MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
       //def stretch(arr: Array[String], size: Int) = arr ++ Array.fill[String](size-arr.size)("")
@@ -477,32 +559,48 @@ trait OptiWranglerDSL extends Base {
       }
     })
 
-    direct (Table) ("filterBody", Nil, (SArray, MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: MBoolean) implements codegen ($cala, ${
-      val x = 3 // no op test
-      $0.zip($2).map{case(cell, index) => 
-        if ($b[3].contains(index)) $b[1](cell)
-        else true
-      }.reduce(_ || _)
-    })
+    // direct (Table) ("filterBody", Nil, (SArray, MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: MBoolean) implements codegen ($cala, ${
+    //   val x = 3 // no op test
+    //   $0.zip($2).map{case(cell, index) => 
+    //     if ($b[3].contains(index)) $b[1](cell)
+    //     else true
+    //   }.reduce(_ || _)
+    // })
 
     // I/O
-    static (Table) ("apply", Nil, (SSArray, MInt, MInt, MSI, MString) :: Table, effect = mutable) implements allocates(Table, ${$0}, ${$1}, ${$2}, ${$3}, ${$4})
+     
+    // -- gene app
+    
+    static (Table) ("apply", Nil, (SSArray, MInt, MInt/*, MSI, MString*/) :: Table, effect = mutable) implements allocates(Table, ${$0}, ${$1}, ${$2}/*, ${$3}, ${$4}*/)
 
     static (Table) ("apply", Nil, MString :: Table) implements composite ${
-      val d = fromFile($0)
-      Table(d, array_length(d), array_length(array_apply(d,0)), map_empty[String, Int](), parseFileName($0))
+      val lines = ForgeFileReader.readLines($0)(s => s)
+      val d = array_empty[ForgeArray[String]](array_length(lines))
+      var i = 0
+      while (i < array_length(lines)) {
+        array_update(d, i, array_apply(lines,i).fsplit(","))
+        i += 1
+      }
+      Table(d, array_length(d), array_length(array_apply(d,0))/*, map_empty[String, Int](), parseFileName($0)*/)
     }
-
-    direct (Table) ("fromFile", Nil, MString :: SSArray) implements codegen ($cala, ${
-      scala.io.Source.fromFile($0).getLines().map(_.split(",").toArray).toArray
-    }) 
+    
+    // static (Table) ("apply", Nil, MString :: Table) implements composite ${
+    //   val d = fromFile($0)
+    //   Table(d, array_length(d), array_length(array_apply(d,0)), map_empty[String, Int](), parseFileName($0))
+    // }
+    // 
+    // direct (Table) ("fromFile", Nil, MString :: SSArray) implements codegen ($cala, ${
+    //   scala.io.Source.fromFile($0).getLines().map(_.split(",").toArray).toArray
+    // }) 
+    
+    // -- gene app
 
     // ignore header because
-    direct (Table) ("toFile", Nil, (MString, MString, SSArray, MSI) :: MUnit, effect = simple) implements codegen ($cala, ${
-      val of = new java.io.PrintStream(new java.io.FileOutputStream($0 + $1))
-      of.println($2.map(x => x.mkString(",")).mkString("#"))
-      of.close()
-    })
+    // direct (Table) ("toFile", Nil, (MString, MString, SSArray, MSI) :: MUnit, effect = simple) implements codegen ($cala, ${
+    //   val of = new java.io.PrintStream(new java.io.FileOutputStream($0 + $1))
+    //   of.println($2.map(x => x.mkString(",")).mkString("#"))
+    //   of.close()
+    // })
 
     // `Temp`
     direct (Table) ("clip", Nil, MString :: MBoolean) implements codegen ($cala, ${
