@@ -572,6 +572,8 @@ trait OptiWranglerDSL extends Base {
     // -- gene app
     
     static (Table) ("apply", Nil, (SSArray, MInt, MInt/*, MSI, MString*/) :: Table, effect = mutable) implements allocates(Table, ${$0}, ${$1}, ${$2}/*, ${$3}, ${$4}*/)
+    
+    static (Table) ("pure", Nil, (SSArray, MInt, MInt/*, MSI, MString*/) :: Table) implements allocates(Table, ${$0}, ${$1}, ${$2}/*, ${$3}, ${$4}*/)
 
     static (Table) ("apply", Nil, MString :: Table) implements composite ${
       val lines = ForgeFileReader.readLines($0)(s => s)
@@ -581,7 +583,8 @@ trait OptiWranglerDSL extends Base {
         array_update(d, i, array_apply(lines,i).fsplit(","))
         i += 1
       }
-      Table(d, array_length(d), array_length(array_apply(d,0))/*, map_empty[String, Int](), parseFileName($0)*/)
+      val dImm = d.unsafeImmutable
+      Table.pure(dImm, array_length(dImm), array_length(array_apply(dImm,0))/*, map_empty[String, Int](), parseFileName($0)*/)
     }
     
     // static (Table) ("apply", Nil, MString :: Table) implements composite ${
