@@ -30,6 +30,9 @@ trait ForgeArrayWrapper extends HUMAN_DSL_NAMEBase {
     = __arg0.toArray
   def array_range(st: Rep[Int], en: Rep[Int])(implicit __imp0: SourceContext): Rep[ForgeArray[Int]]
     = Array.range(st, en)   
+  def array_string_split(__arg0: Rep[String], __arg1: Rep[String])(implicit __imp0: SourceContext): Rep[ForgeArray[String]]
+    = __arg0.split(__arg1)
+
   def scala_array_apply[T:Manifest](__arg0: Rep[Array[T]],__arg1: Rep[Int])(implicit __imp0: SourceContext): Rep[T] 
     = array_apply(__arg0,__arg1)
   def scala_array_length[T:Manifest](__arg0: Rep[Array[T]])(implicit __imp0: SourceContext): Rep[Int] 
