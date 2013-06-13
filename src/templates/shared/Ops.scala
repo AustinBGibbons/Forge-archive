@@ -70,10 +70,15 @@ trait BaseGenOps extends ForgeCodeGenBase {
   /**
    * For dc_alloc. By convention, dc_alloc's return tpe par must be its last tpe par, if it has one.
    */
-   def instAllocReturnTpe(tpePars: List[Rep[TypePar]], tpeArg: Rep[DSLType]): List[Rep[DSLType]] = {
-     if (tpePars.length > 0) tpePars.dropRight(1) :+ tpeArg
-     else tpePars
-   }  
+  def instAllocReturnTpe(o: Rep[DSLOp], colTpePar: Rep[DSLType], elemTpePar: Rep[DSLType]): List[Rep[DSLType]] = {
+    // dc_alloc is context sensitive: if the first argument is a tpe parameter, we assume a type signature of [R,CR]. otherwise, we assume a signature of [_,R]
+    // note that dc_alloc always takes exactly 2 arguments (a collection and a size). this is still a bit hokey.
+    if (o.tpePars.length > 0) {
+      val colTpe = o.args.apply(0).tpe
+      if (isTpePar(colTpe)) List(elemTpePar,colTpePar) else o.tpePars.dropRight(1).map(p => if (p == colTpe.tpePars.apply(0)) colTpePar.tpePars.apply(0) else p) :+ elemTpePar
+    }
+    else Nil
+  }
   
   // used with overloading
   // if after converting Ts and Vars to Reps there are duplicates, remove them   
@@ -102,10 +107,12 @@ trait BaseGenOps extends ForgeCodeGenBase {
       "(" + args.map(makeArgName).mkString(",") + ")"
     }
   }
+  def makeArgsWithType(args: List[Rep[DSLArg]], typify: Rep[DSLType] => String = repify, addParen: Boolean = true) = makeArgs(args, t => argify(t, typify), addParen)
+  def makeArgsWithNowType(args: List[Rep[DSLArg]], addParen: Boolean = true) = makeArgsWithType(args, repifySome, addParen)
   def makeOpArgs(o: Rep[DSLOp], addParen: Boolean = true) = makeArgs(o.args, addParen = addParen)
   def makeOpFutureArgs(o: Rep[DSLOp], makeArgName: (Rep[DSLArg] => String)) = makeArgs(o.args, t => { val arg = makeArgName(t); if (t.tpe.stage == now && !isTpeInst(t.tpe)) "unit("+arg+")" else arg })
-  def makeOpArgsWithType(o: Rep[DSLOp], typify: Rep[DSLType] => String = repify, addParen: Boolean = true) = makeArgs(o.args, t => argify(t, typify), addParen)
-  def makeOpArgsWithNowType(o: Rep[DSLOp], addParen: Boolean = true) = makeOpArgsWithType(o, repifySome, addParen)
+  def makeOpArgsWithType(o: Rep[DSLOp], typify: Rep[DSLType] => String = repify, addParen: Boolean = true) = makeArgsWithType(o.args, typify, addParen)
+  def makeOpArgsWithNowType(o: Rep[DSLOp], addParen: Boolean = true) = makeArgsWithNowType(o.args, addParen)
   // not used -- still needed?
   // def makeOpArgsWithDefaults(o: Rep[DSLOp], typify: Rep[DSLType] => String = repify) = makeArgs(o.args, t => argify(t, typify))
   // def makeOpArgsWithNowDefault(o: Rep[DSLOp]) = makeOpArgsWithDefaults(o, repifySome)
@@ -204,8 +211,11 @@ trait BaseGenOps extends ForgeCodeGenBase {
   def makeOpMethodNameWithArgs(o: Rep[DSLOp]) = makeOpMethodName(o) + makeFullArgs(o, o => makeOpArgs(o))
   def makeOpMethodNameWithFutureArgs(o: Rep[DSLOp], makeArgName: Rep[DSLArg] => String = simpleArgName) = makeOpMethodName(o) + makeFullArgs(o, k => makeOpFutureArgs(k,makeArgName), nameClashesUniversal) // front-end can name clash with anything
   def makeOpMethodSignature(o: Rep[DSLOp]) = "def " + makeOpMethodName(o) + makeTpeParsWithBounds(o.tpePars) + makeOpArgsWithType(o) + makeOpImplicitArgsWithOverloadWithType(o)
-  def makeSyntaxMethod(o: Rep[DSLOp]) = {
-    "def " + o.name + makeTpeParsWithBounds(o.tpePars) + makeOpArgsWithNowType(o, o.effect != pure) + makeOpImplicitArgsWithOverloadWithType(o) + " = " + makeOpMethodNameWithFutureArgs(o)
+  def makeSyntaxMethod(o: Rep[DSLOp], withReturnTpe: Boolean = false) = {
+    // adding the return type increases verbosity in the generated code, so we omit it by default
+    val ret = if (withReturnTpe) ": " + repifySome(o.retTpe) else ""
+    val curriedArgs = o.curriedArgs.map(a => makeArgsWithNowType(a)).mkString("")
+    "def " + o.name + makeTpeParsWithBounds(o.tpePars) + makeArgsWithNowType(o.firstArgs, o.effect != pure) + curriedArgs + makeOpImplicitArgsWithOverloadWithType(o) + ret + " = " + makeOpMethodNameWithFutureArgs(o)
   }
   
   def makeOpImplMethodName(o: Rep[DSLOp]) = makeOpMethodName(o) + "_impl"
@@ -258,12 +268,22 @@ trait BaseGenOps extends ForgeCodeGenBase {
         if (ForgeCollections.get(col).isEmpty) err("reduce argument " + col.name + " is not a ParallelCollection")
         if (!validTpePar(o,reduce.tpePar)) err("reduce op with undefined type par: " + o.name)
         if (reduce.argIndex < 0 || reduce.argIndex > o.args.length) err("reduce op with illegal arg parameter: " + o.name)        
-        if (reduce.zero.retTpe != reduce.tpePar) err("reduce op with illegal zero parameter: " + o.name)
+        // if (reduce.zero.retTpe != reduce.tpePar) err("reduce op with illegal zero parameter: " + o.name)
+      case mapreduce:MapReduce =>
+        val col = getHkTpe(o.args.apply(mapreduce.argIndex).tpe)
+        if (ForgeCollections.get(col).isEmpty) err("mapreduce argument " + col.name + " is not a ParallelCollection")
+        if (mapreduce.tpePars.productIterator.exists(a => !validTpePar(o,a.asInstanceOf[Rep[DSLType]]))) err("mapreduce op with undefined type par: " + o.name)
+        if (mapreduce.argIndex < 0 || mapreduce.argIndex > o.args.length) err("mapreduce op with illegal arg parameter: " + o.name)        
       case filter:Filter =>
         val col = getHkTpe(o.args.apply(filter.argIndex).tpe)
-        if (ForgeCollections.get(col).isEmpty || !ForgeCollections.get(col).forall(_.isInstanceOf[ParallelCollectionBuffer])) err("filter argument " + col.name + " is not a ParallelCollectionBuffer")
+        if (ForgeCollections.get(col).isEmpty || !ForgeCollections.get(getHkTpe(o.retTpe)).forall(_.isInstanceOf[ParallelCollectionBuffer])) err("filter return type " + col.name + " is not a ParallelCollectionBuffer")
         if (filter.tpePars.productIterator.exists(a => !validTpePar(o,a.asInstanceOf[Rep[DSLType]]))) err("filter op with undefined type par: " + o.name)
         if (filter.argIndex < 0 || filter.argIndex > o.args.length) err("filter op with illegal arg parameter: " + o.name)      
+      case hfr:HashFilterReduce =>
+        val col = getHkTpe(o.args.apply(hfr.argIndex).tpe)
+        if (ForgeCollections.get(col).isEmpty || !ForgeCollections.get(getHkTpe(o.retTpe)).forall(_.isInstanceOf[ParallelCollectionBuffer])) err("hashFilterReduce return type " + col.name + " is not a ParallelCollectionBuffer")
+        if (hfr.tpePars.productIterator.exists(a => !validTpePar(o,a.asInstanceOf[Rep[DSLType]]))) err("hashFilterReduce op with undefined type par: " + o.name)
+        if (hfr.argIndex < 0 || hfr.argIndex > o.args.length) err("hashFilterReduce op with illegal arg parameter: " + o.name)            
       case foreach:Foreach =>
         val col = getHkTpe(o.args.apply(foreach.argIndex).tpe)
         if (ForgeCollections.get(col).isEmpty) err("foreach argument " + col.name + " is not a ParallelCollection")
@@ -284,9 +304,8 @@ trait BaseGenOps extends ForgeCodeGenBase {
   
   // certain ops (e.g. "apply" cannot be expressed with infix notation right now), so we use implicits as a workaround
   def noInfix(o: Rep[DSLOp]) = {
-    // blacklist
-    if (noInfixList.contains(o.name)) true
-    else (hasFuncArgs(o)) // infix with function args doesn't always resolve correctly
+    // blacklist or curried args or function args (in the latter two cases, infix doesn't always resolve correctly)
+    noInfixList.contains(o.name) || o.curriedArgs.length > 0 || hasFuncArgs(o)
   }
   
   def emitOpSyntax(opsGrp: DSLOps, stream: PrintWriter) {
@@ -300,7 +319,7 @@ trait BaseGenOps extends ForgeCodeGenBase {
       stream.println("  this: " + dsl + " => ")
       stream.println()
       for (o <- implicitOps) {
-        stream.println("  implicit " + makeSyntaxMethod(o))
+        stream.println("  implicit " + makeSyntaxMethod(o, withReturnTpe = true))
       }
       stream.println()
       // we separate these just for generated code readability      
@@ -345,7 +364,6 @@ trait BaseGenOps extends ForgeCodeGenBase {
       val ops = pimpOps.filterNot(o => getHkTpe(o.args.apply(0).tpe).name == "Var" || o.args.apply(0).tpe.stage == now)
       val tpes = ops.map(_.args.apply(0).tpe).distinct
       for (tpe <- tpes) {
-        val name = if (grpIsTpe(opsGrp.grp)) tpe.name else opsGrp.grp.name + tpe.name
         val tpePars = tpe match {
           case Def(TpeInst(_,args)) => args.filter(isTpePar).asInstanceOf[List[Rep[TypePar]]]
           case Def(TpePar(_,_,_)) => List(tpe.asInstanceOf[Rep[TypePar]])
@@ -355,26 +373,25 @@ trait BaseGenOps extends ForgeCodeGenBase {
           case Def(TpeInst(hk,args)) => args.filterNot(isTpePar)
           case _ => Nil
         }
-        
-        val grpName = opsGrp.grp.name
-        val opsClsName = name + tpeArgs.map(_.name).mkString("") + "OpsCls"
-        stream.println("  implicit def " + grpName + "RepTo" + opsClsName + makeTpeParsWithBounds(tpePars) + "(x: " + repify(tpe) + ") = new " + opsClsName + "(x)")
+
+        val opsClsName = opsGrp.grp.name + tpe.name + tpeArgs.map(_.name).mkString("") + "OpsCls"
+        stream.println("  implicit def repTo" + opsClsName + makeTpeParsWithBounds(tpePars) + "(x: " + repify(tpe) + ") = new " + opsClsName + "(x)")
         if (pimpOps.exists(o => o.args.apply(0).tpe.stage == now)) {
-          stream.println("  implicit def " + grpName + "LiftTo" + opsClsName + makeTpeParsWithBounds(tpePars) + "(x: " + quote(tpe) + ") = new " + opsClsName + "(unit(x))")
+          stream.println("  implicit def liftTo" + opsClsName + makeTpeParsWithBounds(tpePars) + "(x: " + quote(tpe) + ") = new " + opsClsName + "(unit(x))")
         }
         // we provide the Var conversion even if no lhs var is declared, since it is essentially a chained implicit with readVar
         if (Tpes.exists(t => getHkTpe(t).name == "Var")) {
-          stream.println("  implicit def " + grpName + "VarTo" + opsClsName + makeTpeParsWithBounds(tpePars) + "(x: " + varify(tpe) + ") = new " + opsClsName + "(readVar(x))")
+          stream.println("  implicit def varTo" + opsClsName + makeTpeParsWithBounds(tpePars) + "(x: " + varify(tpe) + ") = new " + opsClsName + "(readVar(x))")
         }
         stream.println("")
         stream.println("  class " + opsClsName + makeTpeParsWithBounds(tpePars) + "(val self: " + repify(tpe) + ") {")
     
         for (o <- ops if quote(o.args.apply(0).tpe) == quote(tpe)) {
-          // TODO: this should use makeOpArgsWithNowType, but there is no easy way to drop an argument right now
-          val otherArgs = makeArgs(o.args.drop(1), t => t.name + ": " + repifySome(t.tpe) /*+ " = " + unit(t.default)*/, o.effect != pure)
+          val otherArgs = makeArgsWithNowType(o.firstArgs.drop(1))
+          val curriedArgs = o.curriedArgs.map(a => makeArgsWithNowType(a)).mkString("")
           val hkTpePars = if (isTpePar(tpe)) tpePars else getHkTpe(tpe).tpePars                  
           val otherTpePars = o.tpePars.filterNot(p => hkTpePars.map(_.name).contains(p.name))
-          stream.println("    def " + o.name + makeTpeParsWithBounds(otherTpePars) + otherArgs
+          stream.println("    def " + o.name + makeTpeParsWithBounds(otherTpePars) + otherArgs + curriedArgs
             + (makeImplicitArgsWithCtxBoundsWithType(implicitArgsWithOverload(o), o.tpePars diff otherTpePars, without = hkTpePars)) + " = " + makeOpMethodNameWithFutureArgs(o, a => if (a.name ==  o.args.apply(0).name) "self" else simpleArgName(a)))
         }
         stream.println("  }")
