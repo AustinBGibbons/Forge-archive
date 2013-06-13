@@ -205,7 +205,7 @@ trait OptiWranglerDSL extends Base {
 
       infix ("cut") ((MInt, MArray(MInt)) :: Table) implements composite ${
         $self.map(cell => {
-          if ($1 < 0) goodbye("Trying to cut on bad index: " + $1)
+          //if ($1 < 0) goodbye("Trying to cut on bad index: " + $1)
           if ($1 >= cell.size) cell
           else cell.substring(0, $1) + cell.substring($1 + 1)//ow_int_plus($1, 1))
         }, $2)
