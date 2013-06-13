@@ -1,6 +1,6 @@
 package ppl.dsl.forge
 package templates
-package library
+package ident
 
 import java.io.{BufferedWriter, FileWriter, PrintWriter}
 import scala.util.matching._
@@ -13,7 +13,7 @@ import shared.{BaseGenOps,BaseGenDataStructures}
 import Utilities._
 
 trait LibGenOps extends BaseGenOps with BaseGenDataStructures {  
-  this: ForgeCodeGenInterpreter =>
+  this: ForgeCodeGenIdent =>
   
   val IR: ForgeApplicationRunner with ForgeExp with ForgeOpsExp
   import IR._
@@ -229,7 +229,7 @@ trait LibGenOps extends BaseGenOps with BaseGenDataStructures {
       }
       if (d.isEmpty && !isForgePrimitiveType(tpe)) {
         // do nothing -- abstract class will have been generated in the front-end
-        // warn("(library) no data structure found for tpe " + tpe.name + ". emitting empty class declaration") 
+        // warn("(ident) no data structure found for tpe " + tpe.name + ". emitting empty class declaration") 
         // stream.println("  class " + tpe.name + makeTpeParsWithBounds(tpe.tpePars) + "() {}")
         // stream.println()
       }

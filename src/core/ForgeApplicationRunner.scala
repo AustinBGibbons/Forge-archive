@@ -10,6 +10,7 @@ import scala.virtualization.lms.internal.{GenericFatCodegen, GenericCodegen}
 import templates.shared.ForgeCodeGenShared
 import templates.library.ForgeCodeGenInterpreter
 import templates.compiler.ForgeCodeGenDelite
+import templates.ident.ForgeCodeGenIdent
 
 trait ForgeApplicationRunner extends ForgeApplication with ForgeExp {
   val dsl = dslName.filterNot(_ == ' ').capitalize
@@ -24,6 +25,7 @@ trait ForgeApplicationRunner extends ForgeApplication with ForgeExp {
     extern(grp("ForgeArrayBuffer"))
     extern(grp("Var"), withLift = true)    
     extern(grp("InputOutput"))
+    extern(grp("Profiling"))
 
     // -- stage the specification to build the Forge IR
     // this has the side effect of populating all of the internal Forge collections
@@ -60,7 +62,13 @@ trait ForgeApplicationRunner extends ForgeApplication with ForgeExp {
       val buildDir = build + File.separator + dsl + File.separator + "compiler" 
     }
 
-    val codeGenerators = List(sharedCodegen, libraryCodegen, deliteCodegen)
+    // identity
+    val identCodegen = new ForgeCodeGenIdent { 
+      val IR: ForgeApplicationRunner.this.type = ForgeApplicationRunner.this 
+      val buildDir = build + File.separator + dsl + File.separator + "ident" 
+    }
+
+    val codeGenerators = List(sharedCodegen, libraryCodegen, deliteCodegen, identCodegen)
     
     for (c <- codeGenerators) {    
       c.emitDSLImplementation()

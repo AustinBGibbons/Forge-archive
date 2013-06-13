@@ -151,6 +151,13 @@ trait OptiWranglerDSL extends Base {
       }
 
       infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
+      infix ("mapHelper") ((MString ==> MString, MInt, MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
+
+      infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
+        val _width = width($self)//array_range(0, width($self))   
+        val indices = $self.getColumns($2)
+        $self.mapHelper($1, _width, indices)
+      }
 
       infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
         val _width = array_range(0, width($self))   
@@ -453,12 +460,17 @@ trait OptiWranglerDSL extends Base {
       }
     })
 */
+    direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MInt, MArray(MInt)) :: SArray) implements codegen ($cala, ${
+      if ($0 == null) null
+      else {
+        $0.zip((0 until $2)).map{case(cell, index) => 
+          if ($b[3].contains(index)) $b[1](cell)
+          else cell
+        }
+      }
+    })
+
     direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
-    /*
-      println("Hi ==")
-      println($0)
-      println($2)
-    */
       if ($0 == null) null
       else
       $0.zip($2).map{case(cell, index) => 
