@@ -207,21 +207,23 @@ trait OptiWranglerDSL extends Base {
       infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => {
         val i = var_new(unit(0))
         var found = unit(true)
-        println(array_length(row))
-       // println("al : ") 
-        println( (i < array_length(row)))
-        while (i < array_length(row) && found) {
-         // println("ac: ") 
-          println( array_contains($2, i))
+        //var loop_cond = (i < array_length(row)) && (found)
+        while (found && (i < array_length(row))) {
+        println(i)
+        println(unit("should match the previous bottom"))
+        println(found)
           if (array_contains($2, i))  {
-           // println("apply? ")
             if($1(array_apply(row,i))) {
               found = unit(false)
-              println(found)
             }
           }
           i += 1
+        println(unit("should match the next top"))
+        println(found)
+        println(unit("===="))
+       //   loop_cond = (i < array_length(row)) && (found)
         }
+        println(unit("Final Verdict"))
         println (found)
         found
         // (row.zip(_width) { (cell, index) => !indices.contains(index) || f(cell) }).reduce(_ || _)
