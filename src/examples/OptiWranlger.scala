@@ -70,6 +70,37 @@ trait OptiWranglerDSL extends Base {
       //println("found: " + found)
       found
     }
+
+
+    direct (Table) ("mapHelperHelper", Nil, (("row",SArray),("func",MString ==> MString),("indices",MArray(MInt))) :: SArray) implements single ${
+      if (row == unit(null)) unit(null.asInstanceOf[ForgeArray[String]])
+      else {
+        //row
+        val out = array_empty[String](array_length($row))
+        var i = 0
+        while (i < array_length($row)) {
+          if (array_contains($indices, i))
+            array_update(out,i,$func(array_apply($row,i)))
+          else
+            array_update(out,i,array_apply($row,i)) 
+          i += 1
+        }
+        out.unsafeImmutable 
+      }
+    }
+
+    direct (Table) ("filterHelperHelper", Nil, (("row",SArray),("cond",MString ==> MBoolean),("indices",MArray(MInt))) :: MBoolean) implements single ${
+     //!($1(array_apply(row,unit(1))))
+     var i = 0
+     var found = true
+     while (i < array_length($row) && found) {
+       if (array_contains($indices,i)) {
+         found = !$cond(array_apply($row,i))
+        }
+        i += 1          
+      } 
+      found
+    }
     
     val TableOps = withTpe (Table)
     TableOps {
@@ -214,6 +245,8 @@ trait OptiWranglerDSL extends Base {
       // infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => filterBody(row, $1, $2, $3)}, ${e => e})
       
       infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => {
+        filterHelperHelper(row,$1,$2)
+        /*
         //!($1(array_apply(row,unit(1))))
         val i = var_new(unit(0))
         val found = var_new(unit(true))
@@ -235,6 +268,7 @@ trait OptiWranglerDSL extends Base {
           i += 1          
         }        
         readVar(found)
+        */
         // (row.zip(_width) { (cell, index) => !indices.contains(index) || f(cell) }).reduce(_ || _)
       }}, ${e => e})
       
@@ -269,9 +303,11 @@ trait OptiWranglerDSL extends Base {
       // })
       
       // infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
-
+      
       // this is doing numRows (e.g. 3M) allocations, while the c version does 3M element updates.. no comparison
       infix ("mapHelper") ((MString ==> MString, MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => {
+        mapHelperHelper(row,$1,$2)
+        /*
         if (ordering2___equal[ForgeArray[String],Null](row,unit(null))) cast_asinstanceof[Null,ForgeArray[String]](unit(null))
         else {
           //row
@@ -287,9 +323,9 @@ trait OptiWranglerDSL extends Base {
             i += 1
           }
           out.unsafeImmutable
-          // (row.zip(_width) { (cell, index) => if (indices.contains(index)) f(cell) else cell })
-          
+          // (row.zip(_width) { (cell, index) => if (indices.contains(index)) f(cell) else cell })          
         } 
+        */
       }})
       
       infix ("map") ((MString ==> MString, MArray(MInt)) :: Table) implements composite ${
