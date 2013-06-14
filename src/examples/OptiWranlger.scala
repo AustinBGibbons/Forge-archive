@@ -55,10 +55,19 @@ trait OptiWranglerDSL extends Base {
     compiler (Table) ("array_contains", Nil, (MArray(MInt), MInt) :: MBoolean) implements single ${
       var i = 0
       var found = false
+      //println("array length is: " + array_length($0))
+      //println("array(0) is: " + array_apply($0,0))
+      //println("looking for elem: " + $1)
+
       while(i < array_length($0) && !found) {
         if (array_apply($0,i) == $1) found = true
         i += 1        
+      //while (primitive2_andand(ordering2_lt(i, array_length($0)), primitive2_unary_bang(found))) {
+      //   if (ordering2___equal(array_apply($0,i), $1)) found = true
+      //   i += 1
       }
+      //if (found == unit(false)) println("did not find elem!")
+      //println("found: " + found)
       found
     }
     
@@ -205,13 +214,27 @@ trait OptiWranglerDSL extends Base {
       // infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt), MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => filterBody(row, $1, $2, $3)}, ${e => e})
       
       infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => {
+        //!($1(array_apply(row,unit(1))))
         val i = var_new(unit(0))
-        var found = unit(false)
-        while (i < array_length(row) && !found) {
-          if (array_contains($2, i) || $1(array_apply(row,i))) found = unit(true)
-          i += 1
-        }
-        found
+        val found = var_new(unit(true))
+        //while (readVar(i) < array_length(row) && readVar(found)) {
+        while (primitive2_andand(ordering2_lt(readVar(i), array_length(row)), readVar(found))) {
+          val ii = readVar(i)
+          val c = array_contains($2, ii)
+          if (c) {
+            //println(unit("index = "))
+            //println(ii)
+            //println(unit("array contains: "))
+            //println(array_apply($2,unit(0)))
+            //val s = array_apply(row,ii)
+            //println(unit("str is: "))
+            //println(s)
+            //var_assign(found, primitive2_unary_bang($1(array_apply(row,ii))))
+            found = !$1(array_apply(row,ii))
+          }
+          i += 1          
+        }        
+        readVar(found)
         // (row.zip(_width) { (cell, index) => !indices.contains(index) || f(cell) }).reduce(_ || _)
       }}, ${e => e})
       
@@ -225,7 +248,10 @@ trait OptiWranglerDSL extends Base {
       infix ("delete") ((MString ==> MBoolean, MInt) :: Table) implements composite ${
         val a = array_empty[Int](1)
         a(0) = $2
-        $self.filter($1, a.unsafeImmutable)
+        val out = $self.filter($1, a.unsafeImmutable)
+        println("before filter size: " + $self.length)
+        println("after filter size: " + out.length)
+        out
       }      
       
       // direct (Table) ("mapBody", Nil, (SArray, MString ==> MString, MArray(MInt), MArray(MInt)) :: SArray) implements codegen ($cala, ${
@@ -244,20 +270,25 @@ trait OptiWranglerDSL extends Base {
       
       // infix ("mapHelper") ((MString ==> MString, MArray(MInt), MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => mapBody(row, $1, $2, $3)})
 
+      // this is doing numRows (e.g. 3M) allocations, while the c version does 3M element updates.. no comparison
       infix ("mapHelper") ((MString ==> MString, MArray(MInt)) :: Table) implements map((SArray, SArray), 0, ${ row => {
         if (ordering2___equal[ForgeArray[String],Null](row,unit(null))) cast_asinstanceof[Null,ForgeArray[String]](unit(null))
         else {
+          //row
           val out = array_empty[String](array_length(row))
           val i = var_new(unit(0))
-          while (i < array_length(row)) {
-            if (array_contains($2, i))
-              array_update(out,i,$1(array_apply(row,i)))
+          while (readVar(i) < array_length(row)) {
+            val ii = readVar(i)
+            if (array_contains($2, ii))
+            //if (ordering2___equal(ii, array_apply($2,unit(0))))
+              array_update(out,ii,$1(array_apply(row,ii)))
             else
-              array_update(out,i,array_apply(row,i)) 
+              array_update(out,ii,array_apply(row,ii)) 
             i += 1
           }
           out.unsafeImmutable
           // (row.zip(_width) { (cell, index) => if (indices.contains(index)) f(cell) else cell })
+          
         } 
       }})
       
@@ -580,7 +611,7 @@ trait OptiWranglerDSL extends Base {
       val d = array_empty[ForgeArray[String]](array_length(lines))
       var i = 0
       while (i < array_length(lines)) {
-        array_update(d, i, array_apply(lines,i).fsplit(","))
+        array_update(d, i, array_apply(lines,i).fsplit("\t"))
         i += 1
       }
       val dImm = d.unsafeImmutable
@@ -608,10 +639,25 @@ trait OptiWranglerDSL extends Base {
     // `Temp`
     direct (Table) ("clip", Nil, MString :: MBoolean) implements codegen ($cala, ${
       val in = $0
-      val g = "AGAT".toList
-      val gsize = g.size
-      if(in.size < gsize) false
-      else in.toList.zip(g).map{case(g,m) => (g == m) || (g == 'N')}.reduce(_ || _)
+      val g = "AGAT"//.toList
+      //val gsize = g.size
+      //println("in is " + in.toString)
+      //println("g is " + g.toString)
+      //if(in.size < gsize) false
+      //else in.toList.zip(g).map{case(g,m) => (g == m) || (g == 'N')}.reduce(_ && _)
+      if (in.length < g.length) false
+      else {
+        var i = 0
+        var m = true
+        while (i < g.length && m) {
+          if (in(i) != g(i) && in(i) != 'N') m = false
+          i += 1
+        }
+        m
+      }
+      //val a = in.toList.zip(g).map{case(g,m) => (g == m) || (g == 'N')}.reduce(_ && _)
+      //println("match: " + a)
+      //a
     })
 
     //()
