@@ -56,7 +56,7 @@ trait OptiWranglerDSL extends Base {
       var i = 0
       var found = false
       while(i < array_length($0) && !found) {
-        if (array_apply($0,i) == $1) found = true
+        if (__equal(array_apply($0,i), $1)) found = true
         i += 1        
       }
       found
@@ -206,11 +206,23 @@ trait OptiWranglerDSL extends Base {
       
       infix ("filterHelper") ((MString ==> MBoolean, MArray(MInt)) :: Table) implements filter ((SArray, SArray), 0, ${row => {
         val i = var_new(unit(0))
-        var found = unit(false)
-        while (i < array_length(row) && !found) {
-          if (array_contains($2, i) || $1(array_apply(row,i))) found = unit(true)
+        var found = unit(true)
+        println(array_length(row))
+       // println("al : ") 
+        println( (i < array_length(row)))
+        while (i < array_length(row) && found) {
+         // println("ac: ") 
+          println( array_contains($2, i))
+          if (array_contains($2, i))  {
+           // println("apply? ")
+            if($1(array_apply(row,i))) {
+              found = unit(false)
+              println(found)
+            }
+          }
           i += 1
         }
+        println (found)
         found
         // (row.zip(_width) { (cell, index) => !indices.contains(index) || f(cell) }).reduce(_ || _)
       }}, ${e => e})
@@ -580,7 +592,7 @@ trait OptiWranglerDSL extends Base {
       val d = array_empty[ForgeArray[String]](array_length(lines))
       var i = 0
       while (i < array_length(lines)) {
-        array_update(d, i, array_apply(lines,i).fsplit(","))
+        array_update(d, i, array_apply(lines,i).fsplit("\t"))
         i += 1
       }
       val dImm = d.unsafeImmutable
@@ -611,7 +623,7 @@ trait OptiWranglerDSL extends Base {
       val g = "AGAT".toList
       val gsize = g.size
       if(in.size < gsize) false
-      else in.toList.zip(g).map{case(g,m) => (g == m) || (g == 'N')}.reduce(_ || _)
+      else in.toList.zip(g).map{case(g,m) => (g == m) || (g == 'N')}.reduce(_ && _)
     })
 
     //()
